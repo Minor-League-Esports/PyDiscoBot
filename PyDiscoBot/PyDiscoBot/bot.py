@@ -76,6 +76,13 @@ class Bot(discord.ext.commands.Bot):
         return self._time.strftime('%A')
 
     @property
+    def default_embed_color(self):
+        """ return the discord.color for an embed object to use
+            Over-ride this property to use a different color
+        """
+        return discord.Color.dark_red()
+
+    @property
     def guild(self) -> discord.Guild:
         return self._guild
 
@@ -123,15 +130,15 @@ class Bot(discord.ext.commands.Bot):
         self._periodic_task.change_interval(seconds=self.cycle_time)
         self._periodic_task.run.start()
 
-    @staticmethod
-    def default_embed(title: str,
+    def default_embed(self,
+                      title: str,
                       description: str = '') -> discord.Embed:
         """ Helper function to easily and repeatedly get the same embed\n
             **param title**: title of the embed\n
             **param description**: description to create the embed with\n
             **returns**: discord.Embed with name and description supplied
          """
-        return discord.Embed(color=discord.Color.dark_red(),
+        return discord.Embed(color=self.default_embed_color,
                              title=title,
                              description=description)
 
@@ -177,7 +184,7 @@ class Bot(discord.ext.commands.Bot):
         """ helper to get information embed\n
             **returns**: discord.Embed with bot info attached\n
         """
-        embed = discord.Embed(color=discord.Color.dark_red(), title='**Utility Bot Info**\n\n',
+        embed = discord.Embed(color=self.default_embed_color, title='**Utility Bot Info**\n\n',
                               description='For help, type "ub.help"\n\n')
         embed.add_field(name='Version', value=self.version, inline=True)
         embed.add_field(name='Boot Time', value=self._start_time, inline=True)
