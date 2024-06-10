@@ -1,13 +1,18 @@
+#!/usr/bin/env python
 """ Periodic Task
 # Author: irox_rl
 # Purpose: Periodic Task to run tasks as required per application
-# Version 3.00.01
+# Version 1.0.3
 """
-import channels
+
+# local imports #
+from .channels import clear_channel_messages
+
+# non-local imports
 import datetime
 import discord
 from discord.ext import tasks
-from typing import Self, Callable
+from typing import Callable
 
 
 class PeriodicTask:
@@ -61,7 +66,7 @@ class PeriodicTask:
 
         """ clear out channel messages
         """
-        await channels.clear_channel_messages(self.bot.admin_channel, 100)
+        await clear_channel_messages(self.bot.admin_channel, 100)
 
         """ generate new admin message and record it
         """

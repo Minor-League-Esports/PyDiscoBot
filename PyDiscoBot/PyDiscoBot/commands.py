@@ -1,8 +1,13 @@
+#!/usr/bin/env python
 """ Minor League E-Sports Bot Commands
 # Author: irox_rl
 # Purpose: General Functions and Commands
-# Version 3.00.01
+# Version 1.0.3
 """
+
+# local imports #
+
+# non-local imports
 import datetime
 import discord
 from discord.ext import commands

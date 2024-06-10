@@ -1,6 +1,13 @@
-""" Channels
-    Created in global space to be used as a C-Like 'Static Class'
-        """
+#!/usr/bin/env python
+""" Channels functions
+# Author: irox_rl
+# Purpose: General Functions of discord channels
+# Version 1.0.3
+"""
+
+# local imports #
+
+# non-local imports
 import discord
 
 

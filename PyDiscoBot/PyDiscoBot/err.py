@@ -1,3 +1,13 @@
+#!/usr/bin/env python
+""" error
+# Author: irox_rl
+# Purpose: show errors? also register callback for error messages
+# Version 1.0.3
+"""
+
+# local imports #
+
+# non-local imports
 from typing import Callable
 
 err_callback: Callable = None
