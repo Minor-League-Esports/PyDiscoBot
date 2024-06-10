@@ -12,19 +12,6 @@ description = "A standard implimentation of discord-python API for bot usage."
 readme = "README.md"
 requires-python = ">=3.11"
 classifiers = [
-    "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: MIT License",
-    "Operating System :: OS Independent",
-]
-dependencies = [
-    "discord.py",
-    "python-dotenv"
-]
-
-license = {file = "LICENSE"}
-keywords = ["python", "discord", "bot", "api"]
-
-classifiers = [
   # How mature is this project? Common values are
   #   3 - Alpha
   #   4 - Beta
@@ -41,6 +28,13 @@ classifiers = [
   # Specify the Python versions you support here.
   "Programming Language :: Python :: 3.11",
 ]
+dependencies = [
+    "discord.py",
+    "python-dotenv"
+]
+
+license = {file = "LICENSE"}
+keywords = ["python", "discord", "bot", "api"]
 
 [project.urls]
 Homepage = "https://github.com/iroxusux/PyDiscoBot"
