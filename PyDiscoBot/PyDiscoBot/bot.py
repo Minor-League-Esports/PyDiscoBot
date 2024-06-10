@@ -1,19 +1,23 @@
+#!/usr/bin/env python
 """ Minor League E-Sports Bot
 # Author: irox_rl
 # Purpose: General Functions of a League Franchise summarized in bot fashion!
-# Version 3.00.01
+# Version 1.0.3
 """
+
+# local imports #
+from .channels import get_channel_by_id
+from .commands import Commands
+from .err import err, register_callback
+from .periodic_task import PeriodicTask
+
+# non-local imports
 import asyncio
-import channels
-import commands
 import datetime
 import discord
 from discord.ext import commands as disco_commands
 import dotenv
-import err
 import os
-from periodic_task import PeriodicTask
-
 
 class Bot(discord.ext.commands.Bot):
     """ Default bot by irox
@@ -51,7 +55,7 @@ class Bot(discord.ext.commands.Bot):
         for cog in command_cogs:
             asyncio.run(self.add_cog(cog(self)))
 
-        err.register_callback(self.__err__)
+        register_callback(self.__err__)
 
     @property
     def admin_channel(self) -> discord.TextChannel | None:
@@ -240,14 +244,14 @@ class Bot(discord.ext.commands.Bot):
                              'Please invite the bot to the guild you wish to connect to')
 
         self._handler = next((x for x in self._guild.members if x.id.__str__() == handler_token), None)
-        self._admin_channel = channels.get_channel_by_id(admin_channel_token,
-                                                         self._guild) if admin_channel_token else None
-        self._notification_channel = channels.get_channel_by_id(notification_channel_token,
-                                                                self._guild) if notification_channel_token else None
-        self._admin_commands_channel = channels.get_channel_by_id(admin_commands_channel_token,
-                                                                  self.guild) if admin_commands_channel_token else None
-        self._public_commands_channel = channels.get_channel_by_id(public_commands_channel_token,
-                                                                   self.guild) if public_commands_channel_token else None
+        self._admin_channel = get_channel_by_id(admin_channel_token,
+                                                self._guild) if admin_channel_token else None
+        self._notification_channel = get_channel_by_id(notification_channel_token,
+                                                       self._guild) if notification_channel_token else None
+        self._admin_commands_channel = get_channel_by_id(admin_commands_channel_token,
+                                                         self.guild) if admin_commands_channel_token else None
+        self._public_commands_channel = get_channel_by_id(public_commands_channel_token,
+                                                          self.guild) if public_commands_channel_token else None
 
         self._initialized = True
 
@@ -295,7 +299,7 @@ if __name__ == '__main__':
     """
     bot = Bot('ub.',
               intents,
-              command_cogs=[commands.Commands])
+              command_cogs=[Commands])
     """ Start 
     """
     bot.run(os.getenv('DISCORD_TOKEN'))
