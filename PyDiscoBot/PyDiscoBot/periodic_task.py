@@ -7,7 +7,7 @@ import channels
 import datetime
 import discord
 from discord.ext import tasks
-from typing import Self, Callable
+from typing import Callable
 
 
 class PeriodicTask:
