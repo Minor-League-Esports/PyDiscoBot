@@ -2,7 +2,7 @@
 """ Minor League E-Sports Bot Commands
 # Author: irox_rl
 # Purpose: General Functions and Commands
-# Version 1.0.3
+# Version 1.0.4
 """
 
 # local imports #
@@ -30,7 +30,9 @@ class Commands(commands.Cog):
                    *_str: str):
         await ctx.send(' '.join(_str))
 
-    @commands.command(name='datetounix', description='convert date to unix code for discord purposes')
+    @commands.command(name='datetounix',
+                      description='convert date to unix code for discord purposes.\n'
+                                  'You must give a date in the following format: y/m/d H:M:S')
     async def datetounix(self,
                          ctx: discord.ext.commands.Context,
                          *date: str):
@@ -38,12 +40,11 @@ class Commands(commands.Cog):
             _date = ' '.join(date)
             d = datetime.datetime.strptime(_date, '%y/%m/%d %H:%M:%S')
             unix_time = time.mktime(d.timetuple())
-            await ctx.send(str(int(unix_time)))
-            await ctx.send('template: <t::F>')
+            await ctx.send(f'template: t:{str(int(unix_time))}:F  (remember to add < and > around the template!')
             await ctx.send(f'<t:{int(unix_time)}:F>')
         except ValueError:
             await ctx.reply('You must give a date in the following format:\n'
-                            'yy/mm/dd hh/mm/ss\n'
+                            '%y/%m/%d %H:%M:%S\n'
                             'do not include am/pm. use 24 hour clock.')
 
     @commands.command(name='help', description="Show all available commands for this bot.")
