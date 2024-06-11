@@ -8,9 +8,19 @@
 # local imports #
 
 # non-local imports
+from discord.ext import commands
+
 from typing import Callable
 
 err_callback: Callable = None
+
+
+class InsufficientPrivilege(commands.CheckFailure):
+    pass
+
+
+class IllegalChannel(commands.CheckFailure):
+    pass
 
 
 async def err(message: str | Exception) -> None:

@@ -79,5 +79,5 @@ class Commands(commands.Cog):
         if message.author == self.bot.user:
             return
 
-        if 'nice' in message.content.lower():
+        if 'nice' == message.content.lower():
             await message.reply('nice')

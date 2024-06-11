@@ -8,7 +8,7 @@
 # local imports #
 from .channels import get_channel_by_id
 from .commands import Commands
-from .err import err, register_callback
+from .err import err, register_callback, InsufficientPrivilege, IllegalChannel
 from .periodic_task import PeriodicTask
 
 # non-local imports
@@ -18,6 +18,7 @@ import discord
 from discord.ext import commands as disco_commands
 import dotenv
 import os
+
 
 class Bot(discord.ext.commands.Bot):
     """ Default bot by irox
@@ -214,8 +215,15 @@ class Bot(discord.ext.commands.Bot):
             """
         if isinstance(error, discord.ext.commands.errors.CommandNotFound):
             await ctx.reply("That command wasn't found! Type 'ub.help' for a list of all available commands.")
+            return
         elif isinstance(error, discord.HTTPException):
             await ctx.reply('We are being rate limited... Please wait a few moments before trying that again.')
+            return
+        elif isinstance(error, InsufficientPrivilege):
+            await ctx.reply('You do not have sufficient privileges to do that.')
+            return
+        elif isinstance(error, IllegalChannel):
+            return
         else:
             await self.__err__(f'We have encountered the following error:\n{error.__str__()}')
             raise error
