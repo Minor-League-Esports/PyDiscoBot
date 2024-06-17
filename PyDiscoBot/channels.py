@@ -2,10 +2,13 @@
 """ Channels functions
 # Author: irox_rl
 # Purpose: General Functions of discord channels
-# Version 1.0.3
+# Version 1.0.5
+#
+# v1.0.5 - update clear_channel_messages to use err function for reporting
 """
 
 # local imports #
+from .err import err
 
 # non-local imports
 import discord
@@ -28,11 +31,8 @@ async def clear_channel_messages(channel: discord.channel,
     try:
         await channel.delete_messages([message async for message in channel.history(limit=count)])
         return True
-    except discord.ClientException:
-        return False
-    except discord.Forbidden:
-        return False
-    except discord.HTTPException:
+    except (discord.ClientException, discord.Forbidden, discord.HTTPException) as e:
+        await err(e)
         return False
 
 

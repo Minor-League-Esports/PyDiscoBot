@@ -2,13 +2,17 @@
 """ Minor League E-Sports Bot
 # Author: irox_rl
 # Purpose: General Functions of a League Franchise summarized in bot fashion!
-# Version 1.0.3
+# Version 1.0.5
+#
+# v1.0.5 - update bot to allow list command prefixes, as well as string
+            update on_command_error to include MissingRequiredArgument error
+            remove unused method
 """
 
 # local imports #
 from .channels import get_channel_by_id
 from .commands import Commands
-from .err import err, register_callback, InsufficientPrivilege, IllegalChannel
+from .err import register_callback, InsufficientPrivilege, IllegalChannel
 from .periodic_task import PeriodicTask
 
 # non-local imports
@@ -25,17 +29,21 @@ class Bot(discord.ext.commands.Bot):
     """
 
     def __init__(self,
-                 command_prefix: str | None,
+                 command_prefix: str | list,
                  bot_intents: discord.Intents | None,
                  command_cogs: [disco_commands.Cog]):
         super().__init__(command_prefix=command_prefix,
                          intents=bot_intents,
                          help_command=None,
                          case_insensitive=True)
+        self._version = os.getenv('VERSION')
+        if not self._version:
+            raise ValueError('Version not determined from .env file. Please use a valid .env file.')
         try:
             self._server_icon = int(os.getenv('SERVER_ICON'))
         except ValueError:
             self._server_icon = None
+
         self._handler: discord.User | None = None
         self._admin_channel: discord.TextChannel | None = None
         self._notification_channel: discord.TextChannel | None = None
@@ -48,7 +56,6 @@ class Bot(discord.ext.commands.Bot):
         self._last_time = self._time
         self._start_time = datetime.datetime.now()
         self._cycle_time = int(os.getenv('CYCLE_TIME'))
-        self._version = os.getenv('VERSION')
         self._periodic_task: PeriodicTask = PeriodicTask(self.cycle_time,
                                                          self,
                                                          task_callback=self.on_task,
@@ -143,6 +150,7 @@ class Bot(discord.ext.commands.Bot):
             **param description**: description to create the embed with\n
             **returns**: discord.Embed with name and description supplied
          """
+        # this should be updated to be a class method, along with the default color
         return discord.Embed(color=self.default_embed_color,
                              title=title,
                              description=description)
@@ -198,10 +206,6 @@ class Bot(discord.ext.commands.Bot):
         embed.add_field(name='Cycle Time', value=self.cycle_time, inline=True)
         return embed
 
-    def member_by_id(self,
-                     _id: int):
-        return next((x for x in self.guild.members if x.id == _id), None)
-
     async def on_command_error(self,
                                ctx: discord.ext.commands.Context,
                                error) -> None:
@@ -215,6 +219,9 @@ class Bot(discord.ext.commands.Bot):
             """
         if isinstance(error, discord.ext.commands.errors.CommandNotFound):
             await ctx.reply("That command wasn't found! Type 'ub.help' for a list of all available commands.")
+            return
+        if isinstance(error, discord.ext.commands.errors.MissingRequiredArgument):
+            await ctx.reply(f'You must fill in additional arguments for this command!\n{error}')
             return
         elif isinstance(error, discord.HTTPException):
             await ctx.reply('We are being rate limited... Please wait a few moments before trying that again.')
