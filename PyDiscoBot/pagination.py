@@ -24,7 +24,7 @@ class Pagination(discord.ui.View):
         self.get_page = get_page
         self.total_pages: Optional[int] = None
         self.index = 1
-        super().__init__(timeout=None)
+        super().__init__(timeout=100)
 
     async def interaction_check(self,
                                 interaction: discord.Interaction) -> bool:
@@ -73,6 +73,14 @@ class Pagination(discord.ui.View):
     async def next(self, interaction: discord.Interaction, button: discord.Button):
         self.index += 1
         await self.edit_page(interaction)
+
+    async def on_timeout(self) -> None:
+        embed, self.total_pages = await self.get_page(0,
+                                                      as_timout=True)
+        if not self.msg:
+            self.msg = await self.ctx.send(embed=embed)
+        else:
+            await self.msg.edit(embed=embed, view=None)
 
     @staticmethod
     def compute_total_pages(total_results: int, results_per_page: int) -> int:

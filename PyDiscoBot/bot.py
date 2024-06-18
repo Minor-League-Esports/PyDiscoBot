@@ -7,6 +7,7 @@
 # v1.0.5 - update bot to allow list command prefixes, as well as string
             update on_command_error to include MissingRequiredArgument error
             remove unused method
+            include 'last_time' to public properties
 """
 
 # local imports #
@@ -122,6 +123,10 @@ class Bot(discord.ext.commands.Bot):
         self._extended_public_commands_channels = value
 
     @property
+    def last_time(self):
+        return self._last_time
+
+    @property
     def server_icon(self):
         return self._server_icon
 
@@ -174,6 +179,10 @@ class Bot(discord.ext.commands.Bot):
                       _name: str):
         return next((x for x in self.guild.emojis if x.name == _name), None)
 
+    async def get_help_cmds_by_user(self,
+                                    ctx: discord.ext.commands.Context) -> [disco_commands.command]:
+        return self.commands
+
     async def send_notification(self,
                                 ctx: discord.ext.commands.Context | discord.abc.GuildChannel,
                                 text: str,
@@ -185,10 +194,9 @@ class Bot(discord.ext.commands.Bot):
         **returns**: None\n
         """
 
-        embed = (self.default_embed('**Utility Bot Notification**\n\n',
-                                    f"For help, type 'ub.help' - v{self.version}")
-                 .add_field(name='Notification', value=text, inline=True)
-                 .set_footer(text=f'Generated: {self._last_time}'))
+        embed = (self.default_embed('**Notification**')
+                 .add_field(name='Message', value=text, inline=True)
+                 .set_footer(text=f'Generated: {datetime.datetime.now()}'))
         if self._server_icon:
             embed.set_thumbnail(url=self.get_emoji(self._server_icon).url)
         await ctx.reply(embed=embed) if as_reply and (ctx.author is not None) else await ctx.send(embed=embed)
@@ -204,6 +212,8 @@ class Bot(discord.ext.commands.Bot):
         embed.add_field(name='Ticks', value=self._periodic_task.ticks, inline=True)
         embed.add_field(name='Time', value=self._last_time, inline=True)
         embed.add_field(name='Cycle Time', value=self.cycle_time, inline=True)
+        if self._server_icon:
+            embed.set_thumbnail(url=self.get_emoji(self._server_icon).url)
         return embed
 
     async def on_command_error(self,
