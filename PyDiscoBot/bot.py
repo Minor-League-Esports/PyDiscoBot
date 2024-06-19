@@ -5,15 +5,17 @@
 # Version 1.0.5
 #
 # v1.0.5 - update bot to allow list command prefixes, as well as string
-            update on_command_error to include MissingRequiredArgument error
+            update on_command_error to include multiple error types
             remove unused method
             include 'last_time' to public properties
+            include 'loaded' property for all external tasks.
+            updated embed formatting
 """
 
 # local imports #
 from .channels import get_channel_by_id
 from .commands import Commands
-from .err import register_callback, InsufficientPrivilege, IllegalChannel
+from .err import register_callback, InsufficientPrivilege, IllegalChannel, BotNotLoaded
 from .periodic_task import PeriodicTask
 
 # non-local imports
@@ -104,6 +106,13 @@ class Bot(discord.ext.commands.Bot):
         """ return the handler of this bot
                         """
         return self._handler
+
+    @property
+    def loaded(self) -> bool:
+        """ loaded status for bot\n
+        override to include external processes that need to load when initiating
+        """
+        return self._periodic_task.initialized and self._initialized
 
     @property
     def notification_channel(self) -> discord.TextChannel | None:
@@ -205,13 +214,13 @@ class Bot(discord.ext.commands.Bot):
         """ helper to get information embed\n
             **returns**: discord.Embed with bot info attached\n
         """
-        embed = discord.Embed(color=self.default_embed_color, title='**Utility Bot Info**\n\n',
-                              description='For help, type "ub.help"\n\n')
-        embed.add_field(name='Version', value=self.version, inline=True)
-        embed.add_field(name='Boot Time', value=self._start_time, inline=True)
-        embed.add_field(name='Ticks', value=self._periodic_task.ticks, inline=True)
-        embed.add_field(name='Time', value=self._last_time, inline=True)
-        embed.add_field(name='Cycle Time', value=self.cycle_time, inline=True)
+        embed = discord.Embed(color=self.default_embed_color, title='**Bot Info**\n\n',
+                              description='For help, type `ub.help`\n\n')
+        embed.add_field(name='Version', value=f"`{self.version}`", inline=True)
+        embed.add_field(name='Boot Time', value=f"`{self._start_time}`", inline=False)
+        embed.add_field(name='Current Tick', value=f"`{self._periodic_task.ticks}`", inline=True)
+        embed.add_field(name='Last Tick Time', value=f"`{self._last_time}`", inline=False)
+        embed.add_field(name='Cycle Time', value=f"`{self.cycle_time}` seconds", inline=True)
         if self._server_icon:
             embed.set_thumbnail(url=self.get_emoji(self._server_icon).url)
         return embed
@@ -237,9 +246,13 @@ class Bot(discord.ext.commands.Bot):
             await ctx.reply('We are being rate limited... Please wait a few moments before trying that again.')
             return
         elif isinstance(error, InsufficientPrivilege):
-            await ctx.reply('You do not have sufficient privileges to do that.')
+            await ctx.reply(error.__str__())
             return
         elif isinstance(error, IllegalChannel):
+            await ctx.reply(error.__str__())
+            return
+        elif isinstance(error, BotNotLoaded):
+            await ctx.reply(error.__str__())
             return
         else:
             await self.__err__(f'We have encountered the following error:\n{error.__str__()}')

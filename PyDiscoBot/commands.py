@@ -31,6 +31,9 @@ class Commands(commands.Cog):
     async def get_public_cmds_channel(self):
         return self.bot.public_commands_channel
 
+    def bot_loaded(self) -> bool:
+        return self.bot.loaded
+
     @commands.command(name='echo',
                       description='echo',
                       hidden=True)
@@ -94,10 +97,6 @@ class Commands(commands.Cog):
                       description="Get build info.")
     async def info(self,
                    ctx: discord.ext.commands.Context):
-        if ctx.channel is not discord.DMChannel:
-            if self.bot.public_commands_channel is None or ctx.channel is not self.bot.public_commands_channel:
-                if self.bot.admin_commands_channel is None or ctx.channel is not self.bot.admin_commands_channel:
-                    return
         return await ctx.reply(embed=self.bot.info_embed())
 
     @commands.command(name='test',
