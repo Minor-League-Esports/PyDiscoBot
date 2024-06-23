@@ -2,14 +2,10 @@
 """ Minor League E-Sports Bot
 # Author: irox_rl
 # Purpose: General Functions of a League Franchise summarized in bot fashion!
-# Version 1.0.5
+# Version 1.0.6
 #
-# v1.0.5 - update bot to allow list command prefixes, as well as string
-            update on_command_error to include multiple error types
-            remove unused method
-            include 'last_time' to public properties
-            include 'loaded' property for all external tasks.
-            updated embed formatting
+# v1.0.6 - integrate for slash commands
+        update send_notification to include interactions if command is app_command
 """
 
 # local imports #
@@ -43,16 +39,13 @@ class Bot(discord.ext.commands.Bot):
         if not self._version:
             raise ValueError('Version not determined from .env file. Please use a valid .env file.')
         try:
-            self._server_icon = int(os.getenv('SERVER_ICON'))
+            self._server_icon = os.getenv('SERVER_ICON')
         except ValueError:
             self._server_icon = None
 
         self._handler: discord.User | None = None
         self._admin_channel: discord.TextChannel | None = None
         self._notification_channel: discord.TextChannel | None = None
-        self._admin_commands_channel: discord.TextChannel | None = None
-        self._public_commands_channel: discord.TextChannel | None = None
-        self._extended_public_commands_channels: [discord.TextChannel] = []
         self._initialized = False
         self._guild: discord.Guild | None = None
         self._time = datetime.datetime.now()
@@ -75,10 +68,6 @@ class Bot(discord.ext.commands.Bot):
         return self._admin_channel
 
     @property
-    def admin_commands_channel(self) -> discord.TextChannel | None:
-        return self._admin_commands_channel
-
-    @property
     def cycle_time(self) -> int:
         """ return the cycle time
                 """
@@ -95,7 +84,7 @@ class Bot(discord.ext.commands.Bot):
         """ return the discord.color for an embed object to use
             Over-ride this property to use a different color
         """
-        return discord.Color.dark_red()
+        return discord.Color.dark_blue()
 
     @property
     def guild(self) -> discord.Guild:
@@ -117,19 +106,6 @@ class Bot(discord.ext.commands.Bot):
     @property
     def notification_channel(self) -> discord.TextChannel | None:
         return self._notification_channel
-
-    @property
-    def public_commands_channel(self) -> discord.TextChannel | None:
-        return self._public_commands_channel
-
-    @property
-    def extended_public_commands_channels(self) -> [discord.TextChannel]:
-        return self._extended_public_commands_channels
-
-    @extended_public_commands_channels.setter
-    def extended_public_commands_channels(self,
-                                          value):
-        self._extended_public_commands_channels = value
 
     @property
     def last_time(self):
@@ -158,14 +134,17 @@ class Bot(discord.ext.commands.Bot):
 
     def default_embed(self,
                       title: str,
-                      description: str = '') -> discord.Embed:
+                      description: str = '',
+                      color=None) -> discord.Embed:
         """ Helper function to easily and repeatedly get the same embed\n
             **param title**: title of the embed\n
             **param description**: description to create the embed with\n
             **returns**: discord.Embed with name and description supplied
          """
         # this should be updated to be a class method, along with the default color
-        return discord.Embed(color=self.default_embed_color,
+        if not color:
+            color = self.default_embed_color
+        return discord.Embed(color=color,
                              title=title,
                              description=description)
 
@@ -188,27 +167,44 @@ class Bot(discord.ext.commands.Bot):
                       _name: str):
         return next((x for x in self.guild.emojis if x.name == _name), None)
 
+    async def get_app_cmds_by_user(self,
+                                   ctx: discord.ext.commands.Context) -> [disco_commands.command]:
+        return self.tree.walk_commands()
+
     async def get_help_cmds_by_user(self,
                                     ctx: discord.ext.commands.Context) -> [disco_commands.command]:
         return self.commands
 
+    async def get_notification_embed(self,
+                                     text: str) -> discord.Embed:
+        embed = (self.default_embed('**Notification**')
+                 .add_field(name='Message', value=text, inline=True)
+                 .set_footer(text=f'Generated: {datetime.datetime.now()}'))
+        if self._server_icon:
+            embed.set_thumbnail(url=self._server_icon)
+        return embed
+
     async def send_notification(self,
-                                ctx: discord.ext.commands.Context | discord.abc.GuildChannel,
+                                ctx: discord.ext.commands.Context | discord.abc.GuildChannel | discord.Interaction,
                                 text: str,
-                                as_reply: bool = False) -> None:
+                                as_reply: bool = False,
+                                as_followup: bool = False) -> None:
         """ Helper function to send notifications as required to a specific context, also as reply if required\n
         **param ctx**: context to send notification to\n
         **param text**: text of the notification body\n
         **as_reply**: send the notification as a discord reply to the context\n
         **returns**: None\n
         """
-
-        embed = (self.default_embed('**Notification**')
-                 .add_field(name='Message', value=text, inline=True)
-                 .set_footer(text=f'Generated: {datetime.datetime.now()}'))
-        if self._server_icon:
-            embed.set_thumbnail(url=self.get_emoji(self._server_icon).url)
-        await ctx.reply(embed=embed) if as_reply and (ctx.author is not None) else await ctx.send(embed=embed)
+        embed = await self.get_notification_embed(text)
+        if isinstance(ctx, discord.ext.commands.Context):
+            await ctx.reply(embed=embed) if as_reply and (ctx.author is not None) else await ctx.send(embed=embed)
+            return
+        elif isinstance(ctx, discord.Interaction):
+            await ctx.response.send_message(embed=embed) if not as_followup else await ctx.followup.send(embed=embed)
+            return
+        elif isinstance(ctx, discord.TextChannel):
+            await ctx.send(embed=embed)
+            return
 
     def info_embed(self) -> discord.Embed:
         """ helper to get information embed\n
@@ -222,7 +218,7 @@ class Bot(discord.ext.commands.Bot):
         embed.add_field(name='Last Tick Time', value=f"`{self._last_time}`", inline=False)
         embed.add_field(name='Cycle Time', value=f"`{self.cycle_time}` seconds", inline=True)
         if self._server_icon:
-            embed.set_thumbnail(url=self.get_emoji(self._server_icon).url)
+            embed.set_thumbnail(url=self._server_icon)
         return embed
 
     async def on_command_error(self,
@@ -271,26 +267,19 @@ class Bot(discord.ext.commands.Bot):
         handler_token = os.getenv('HANDLER')
         admin_channel_token = os.getenv('ADMIN_CHANNEL')
         notification_channel_token = os.getenv('NOTIFICATION_CHANNEL')
-        admin_commands_channel_token = os.getenv('ADMIN_CMDS_CHANNEL')
-        public_commands_channel_token = os.getenv('PUBLIC_CMDS_CHANNEL')
 
         if not guild_token:
             raise ValueError('guild token must be supplied in .env file!')
         self._guild = next((x for x in self.guilds if x.id.__str__() == guild_token), None)
         if self._guild is None:
             raise ValueError('Supplied guild is not available to this bot.\n'
-                             'Please invite the bot to the guild you wish to connect to')
+                             'Please invite the bot to the rubber duck pond')
 
         self._handler = next((x for x in self._guild.members if x.id.__str__() == handler_token), None)
         self._admin_channel = get_channel_by_id(admin_channel_token,
                                                 self._guild) if admin_channel_token else None
         self._notification_channel = get_channel_by_id(notification_channel_token,
                                                        self._guild) if notification_channel_token else None
-        self._admin_commands_channel = get_channel_by_id(admin_commands_channel_token,
-                                                         self.guild) if admin_commands_channel_token else None
-        self._public_commands_channel = get_channel_by_id(public_commands_channel_token,
-                                                          self.guild) if public_commands_channel_token else None
-
         self._initialized = True
 
         print(f'POST -> {datetime.datetime.now()}')
