@@ -11,7 +11,7 @@
 # local imports #
 from .channels import get_channel_by_id
 from .commands import Commands
-from .err import register_callback, InsufficientPrivilege, IllegalChannel, BotNotLoaded
+from .err import register_callback, InsufficientPrivilege, IllegalChannel, BotNotLoaded, ReportableError
 from .periodic_task import PeriodicTask
 
 # non-local imports
@@ -19,6 +19,7 @@ import asyncio
 import datetime
 import discord
 from discord.ext import commands as disco_commands
+from discord import app_commands
 import dotenv
 import os
 
@@ -43,7 +44,6 @@ class Bot(discord.ext.commands.Bot):
         except ValueError:
             self._server_icon = None
 
-        self._handler: discord.User | None = None
         self._admin_channel: discord.TextChannel | None = None
         self._notification_channel: discord.TextChannel | None = None
         self._initialized = False
@@ -59,6 +59,7 @@ class Bot(discord.ext.commands.Bot):
         for cog in command_cogs:
             asyncio.run(self.add_cog(cog(self)))
 
+        self.tree.on_error = self.on_tree_error
         register_callback(self.__err__)
 
     @property
@@ -91,12 +92,6 @@ class Bot(discord.ext.commands.Bot):
         return self._guild
 
     @property
-    def handler(self) -> discord.User | None:
-        """ return the handler of this bot
-                        """
-        return self._handler
-
-    @property
     def loaded(self) -> bool:
         """ loaded status for bot\n
         override to include external processes that need to load when initiating
@@ -125,7 +120,7 @@ class Bot(discord.ext.commands.Bot):
                                 """
         return self._version
 
-    async def __begin_task__(self) -> None:
+    async def begin_task(self) -> None:
         """ Begin periodic task\n
         **returns**: None\n
         """
@@ -163,10 +158,6 @@ class Bot(discord.ext.commands.Bot):
                                      text=message,
                                      as_reply=False)
 
-    def emoji_by_name(self,
-                      _name: str):
-        return next((x for x in self.guild.emojis if x.name == _name), None)
-
     async def get_app_cmds_by_user(self,
                                    ctx: discord.ext.commands.Context) -> [disco_commands.command]:
         return self.tree.walk_commands()
@@ -190,18 +181,22 @@ class Bot(discord.ext.commands.Bot):
                                 as_reply: bool = False,
                                 as_followup: bool = False) -> None:
         """ Helper function to send notifications as required to a specific context, also as reply if required\n
-        **param ctx**: context to send notification to\n
-        **param text**: text of the notification body\n
-        **as_reply**: send the notification as a discord reply to the context\n
-        **returns**: None\n
         """
         embed = await self.get_notification_embed(text)
+
         if isinstance(ctx, discord.ext.commands.Context):
             await ctx.reply(embed=embed) if as_reply and (ctx.author is not None) else await ctx.send(embed=embed)
             return
+
         elif isinstance(ctx, discord.Interaction):
-            await ctx.response.send_message(embed=embed) if not as_followup else await ctx.followup.send(embed=embed)
-            return
+            if as_followup:
+                return await ctx.followup.send(embed=embed)
+            else:
+                try:
+                    return await ctx.response.send_message(embed=embed)
+                except discord.errors.InteractionResponded:
+                    return await ctx.followup.send(embed=embed)
+
         elif isinstance(ctx, discord.TextChannel):
             await ctx.send(embed=embed)
             return
@@ -213,9 +208,9 @@ class Bot(discord.ext.commands.Bot):
         embed = discord.Embed(color=self.default_embed_color, title='**Bot Info**\n\n',
                               description='For help, type `ub.help`\n\n')
         embed.add_field(name='Version', value=f"`{self.version}`", inline=True)
-        embed.add_field(name='Boot Time', value=f"`{self._start_time}`", inline=False)
+        embed.add_field(name='Boot Time', value=f"`{self._start_time.strftime('%c')}`", inline=False)
         embed.add_field(name='Current Tick', value=f"`{self._periodic_task.ticks}`", inline=True)
-        embed.add_field(name='Last Tick Time', value=f"`{self._last_time}`", inline=False)
+        embed.add_field(name='Last Time', value=f"`{datetime.datetime.now().strftime('%c')}`", inline=False)
         embed.add_field(name='Cycle Time', value=f"`{self.cycle_time}` seconds", inline=True)
         if self._server_icon:
             embed.set_thumbnail(url=self._server_icon)
@@ -227,10 +222,6 @@ class Bot(discord.ext.commands.Bot):
         """ Override of discord.Bot on_command_error
             If CommandNotFound, simply reply to the user of the error.\n
             If not, raise the error naturally\n
-            ***param ctx***: context to send the error message to\n
-            ***param error***: error that occurred\n
-            ***returns***: None\n
-            **raises**: supplied error if not **discord.ext.commands.errors.CommandNotFound**
             """
         if isinstance(error, discord.ext.commands.errors.CommandNotFound):
             await ctx.reply("That command wasn't found! Type 'ub.help' for a list of all available commands.")
@@ -250,9 +241,28 @@ class Bot(discord.ext.commands.Bot):
         elif isinstance(error, BotNotLoaded):
             await ctx.reply(error.__str__())
             return
+        elif isinstance(error, ReportableError):
+            await ctx.reply(error.__str__())
+            return
         else:
             await self.__err__(f'We have encountered the following error:\n{error.__str__()}')
             raise error
+
+    async def on_tree_error(self,
+                            interaction: discord.Interaction,
+                            error: app_commands.AppCommandError):
+        if isinstance(error, app_commands.CommandOnCooldown):
+            return await interaction.response.send_message(f"Command is currently on cooldown! Try again in **{error.retry_after:.2f}** seconds!")
+
+        elif isinstance(error, app_commands.MissingPermissions):
+            return await interaction.response.send_message(f"You're missing permissions to use that")
+
+        elif isinstance(error, discord.app_commands.CommandInvokeError):
+            if isinstance(error.original, ReportableError):
+                return await self.send_notification(interaction,
+                                                    error.original.__str__(),
+                                                    as_followup=False)
+        await self.__err__(error.__str__())
 
     async def on_ready(self,
                        suppress_task=False) -> None:
@@ -264,7 +274,6 @@ class Bot(discord.ext.commands.Bot):
             return
 
         guild_token = os.getenv('GUILD')
-        handler_token = os.getenv('HANDLER')
         admin_channel_token = os.getenv('ADMIN_CHANNEL')
         notification_channel_token = os.getenv('NOTIFICATION_CHANNEL')
 
@@ -275,17 +284,16 @@ class Bot(discord.ext.commands.Bot):
             raise ValueError('Supplied guild is not available to this bot.\n'
                              'Please invite the bot to the rubber duck pond')
 
-        self._handler = next((x for x in self._guild.members if x.id.__str__() == handler_token), None)
         self._admin_channel = get_channel_by_id(admin_channel_token,
                                                 self._guild) if admin_channel_token else None
         self._notification_channel = get_channel_by_id(notification_channel_token,
                                                        self._guild) if notification_channel_token else None
         self._initialized = True
 
-        print(f'POST -> {datetime.datetime.now()}')
+        print(f"POST -> {datetime.datetime.now().strftime('%c')}")
 
         if not suppress_task:
-            await self.__begin_task__()
+            await self.begin_task()
 
     async def on_task(self) -> None:
         """ callback method for periodic task to call during it's interval\n

@@ -25,9 +25,6 @@ class Commands(commands.Cog):
                  master_bot):
         self.bot = master_bot
 
-    def bot_loaded(self) -> bool:
-        return self.bot.loaded
-
     @commands.command(name='echo',
                       description='echo',
                       hidden=True)
@@ -69,7 +66,7 @@ class Commands(commands.Cog):
 
             if as_timout:
                 emb.add_field(name=f'**`Timeout`**',
-                              value='This command has timed out. Type `[/help]` for help.')
+                              value='This command has timed out. Type `/help` for help.')
                 emb.set_footer(text=f'Page 1 of 1')
                 return emb, 0
 
@@ -91,41 +88,9 @@ class Commands(commands.Cog):
                       description="Show all available commands for this bot.")
     async def help(self,
                    ctx: discord.ext.commands.Context):
-        cmds = await self.bot.get_help_cmds_by_user(ctx)
-        sorted_commands = sorted([command for command in cmds if not command.hidden], key=lambda x: x.name)
-
-        async def get_page(page: int,
-                           as_timout: bool = False):
-            emb: discord.Embed = self.bot.default_embed(f'**Commands List**\n\n',
-                                                        f'Available commands for {ctx.author.mention}')
-            if self.bot.server_icon:
-                emb.set_thumbnail(url=self.bot.server_icon)
-
-            if as_timout:
-                emb.add_field(name=f'**`Timeout`**',
-                              value='This command has timed out. Type `[ub.help]` for help.')
-                emb.set_footer(text=f'Page 1 of 1')
-                return emb, 0
-
-            elements_per_page = 5
-            offset = (page - 1) * elements_per_page
-            for cmd in sorted_commands[offset:offset + elements_per_page]:
-                emb.add_field(name=f'**`ub.{cmd} {"  ".join([f"[{param}]" for param in cmd.clean_params])}`**',
-                              value=f'{cmd.description}',
-                              inline=False)
-            total_pages = Pagination.compute_total_pages(len(sorted_commands),
-                                                         elements_per_page)
-
-            emb.set_footer(text=f'Page {page} of {total_pages}')
-            return emb, total_pages
-
-        await Pagination(ctx, get_page).navigate()
-
-    @commands.command(name="info",
-                      description="Get build info.")
-    async def info(self,
-                   ctx: discord.ext.commands.Context):
-        return await ctx.reply(embed=self.bot.info_embed())
+        emb: discord.Embed = self.bot.default_embed(f'**Deprecated**\n\n',
+                                                    f'This bot has been upgraded to use "slash" commands. Type `/help` for more info.')
+        await ctx.reply(embed=emb)
 
     @app_commands.command(name='sync',
                           description='Sync bot app tree. If slash commands are not showing up, try running this command.')
@@ -136,21 +101,6 @@ class Commands(commands.Cog):
         await self.bot.send_notification(interaction,
                                          'Sync complete!\nRestart Discord for affects to take place!',
                                          as_followup=True)
-
-    @commands.command(name='sync',
-                      description='Sync bot app tree. If slash commands are not showing up, try running this command.')
-    async def sync(self, ctx: discord.ext.commands.Context) -> None:
-        await self.bot.tree.sync()
-        await self.bot.send_notification(ctx,
-                                         'Sync complete!\nRestart Discord for affects to take place!',
-                                         True)
-
-    @commands.command(name='test',
-                      description='developer test function',
-                      hidden=True)
-    async def test(self,
-                   ctx: discord.ext.commands.Context):
-        await ctx.send('guh? huh? who what? where am i?')
 
     @commands.Cog.listener()
     async def on_message(self,
