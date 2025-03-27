@@ -27,6 +27,7 @@ import os
 class Bot(discord.ext.commands.Bot):
     """ Default bot by irox
     """
+    default_embed_color = discord.Color.dark_blue()
 
     def __init__(self,
                  command_prefix: str | list,
