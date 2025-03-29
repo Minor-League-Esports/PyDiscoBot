@@ -1,15 +1,3 @@
-#!/usr/bin/env python
-""" guild services
-# Author: irox_rl
-# Purpose: provide common services to guild attributes (server stuff)
-# Version 1.0.5
-#
-#       v1.0.5 - include BotNotLoaded err for predicate checks on commands
-"""
-
-# local imports #
-
-# non-local imports
 import discord
 
 

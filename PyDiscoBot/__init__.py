@@ -1,6 +1,23 @@
 from .bot import Bot
-from .err import *
-from .channels import *
-from .commands import Commands
-from .periodic_task import PeriodicTask
-from .pagination import Pagination, InteractionPagination
+from .tasks import PeriodicTask
+from .types import BotNotLoaded, IllegalChannel, InsufficientPrivilege, ReportableError
+from .services.pagination import Pagination, InteractionPagination
+
+from .services import const
+from .embed_frames import frame, EmbedField
+
+__version__ = "1.1.1"
+
+__all__ = (
+    "Bot",
+    'ReportableError',
+    'IllegalChannel',
+    'InsufficientPrivilege',
+    'BotNotLoaded',
+    "PeriodicTask",
+    "Pagination",
+    "InteractionPagination",
+    'const',
+    'frame',
+    'EmbedField',
+)

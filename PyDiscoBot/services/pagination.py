@@ -1,19 +1,5 @@
-#!/usr/bin/env python
-""" Pagination handling for discord API
-# Author: irox_rl
-# Purpose: Handle pagination efforts for embeds
-# Version 1.0.6
-#
-# v1.0.6 - Include slash commands for help
-        Import Pagination
-"""
-
-# local imports #
 from typing import Callable, Optional
-
-# non-local imports
 import discord
-from discord.ext import commands
 
 
 class Pagination(discord.ui.View):
