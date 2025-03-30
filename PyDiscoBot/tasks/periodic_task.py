@@ -2,6 +2,7 @@ from typing import Callable
 import inspect
 import discord
 from discord.ext import tasks
+from ..services.log import logger
 
 
 class PeriodicTask:
@@ -11,8 +12,7 @@ class PeriodicTask:
 
     def __init__(self,
                  parent):
-        self.logger = parent.logger
-        self.logger.info('initializing periodic task...')
+        self.logger = logger(__name__)
 
         self.admin_message: discord.Message | None = None
         self.parent = parent
@@ -40,4 +40,4 @@ class PeriodicTask:
         """
         self.logger.info('changing periodic task to %s seconds...', str(seconds))
         self.parent.admin_info.cycle_time = seconds
-        self.run.change_interval(seconds=float(self.parent.admin_info.cycle_time))
+        self.run.change_interval(seconds=float(seconds))

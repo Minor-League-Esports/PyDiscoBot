@@ -47,6 +47,7 @@ class Bot(discord.ext.commands.Bot):
         command_cogs.extend(Commands)
         for cog in command_cogs:
             asyncio.run(self.add_cog(cog(self)))
+
         self.tree.on_error = self.on_tree_error
 
     @property
@@ -140,19 +141,21 @@ class Bot(discord.ext.commands.Bot):
         """
         if isinstance(error, app_commands.CommandOnCooldown):
             await interaction.response.send_message(const.ERR_RATE_LMT)
+            return
 
         elif isinstance(error, app_commands.MissingPermissions):
             await interaction.response.send_message(const.ERR_BAD_PRV)
+            return
 
         elif isinstance(error, discord.app_commands.CommandInvokeError):
             if isinstance(error.original, ReportableError):
                 await self.send_notification(interaction,
                                              str(error.original),
                                              as_followup=False)
+                return
 
-        else:
-            super().on_tree_error(interaction,
-                                  error)
+        await self.notify(error)
+        raise error
 
     async def on_ready(self,
                        suppress_task=False) -> None:
@@ -160,7 +163,9 @@ class Bot(discord.ext.commands.Bot):
         **param suppress_task**: if True, do NOT run periodic task at the end of this call\n
         **returns**: None\n
         """
+        self.logger.info('PyDiscoBot on_ready...')
         if self._admin_info.initialized:
+            self.logger.warning('already initialized!')
             return
 
         admin_channel_token = os.getenv('ADMIN_CHANNEL')
@@ -198,4 +203,5 @@ class Bot(discord.ext.commands.Bot):
             override this as needed
         **returns**: None\n
         """
-        self.logger.info('tick: %s', str(self.admin_info.current_tick))
+        self.logger.info('PyDiscoBot on_task | tick: %s',
+                         str(self.admin_info.current_tick))

@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 import datetime
 import discord
-from ..services.const import DEF_EMBED_COLOR, DEF_EMBED_URL
 
 
 @dataclass
@@ -16,8 +15,8 @@ class EmbedField:
 def frame(title: str,
           descr: str | None = None,
           fields: list[EmbedField] | None = None,
-          color: str = DEF_EMBED_COLOR,
-          thumbnail: str = DEF_EMBED_URL) -> discord.Embed:
+          color: str = str(discord.Color.dark_blue()),
+          thumbnail: str = None) -> discord.Embed:
     """get generic embed frame for consistent formatting.
 
     Args:
@@ -30,13 +29,15 @@ def frame(title: str,
     """
 
     embed = (discord.Embed(
-        color=color,
+        color=discord.Color.from_str(color),
         title=title,
         description=descr)
         .set_footer(text=f'Generated: {datetime.datetime.now()}')
         .set_thumbnail(url=thumbnail))
 
     for field in fields:
+        if field is None:
+            continue
         embed.add_field(name=field.name,
                         value=field.value,
                         inline=field.inline)

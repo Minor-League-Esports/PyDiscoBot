@@ -1,9 +1,8 @@
 import os
-import discord
 
 BOT_LOG_NAME = 'bot logger'
 
-DEF_EMBED_COLOR = discord.Color.dark_blue()
+DEF_EMBED_COLOR = '0x206694'
 DEF_EMBED_URL = os.getenv('SERVER_ICON')
 
 ERR_BAD_CMD = "That command wasn't found! Type '/' to see all commands."

@@ -22,5 +22,4 @@ def logger(name: str = __name__):
     cons.setFormatter(formatter)
     _logger.addHandler(cons)
 
-    _logger.info('logger initialized...')
     return _logger
