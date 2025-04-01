@@ -17,7 +17,8 @@ def logger(name: str = __name__):
     cons.setLevel(logging.INFO)
 
     formatter = logging.Formatter(
-        '%(asctime)s | %(name)s | %(levelname)s | %(message)s')
+        '%(asctime)s | %(name)s | %(levelname)s | %(message)s',
+        datefmt="%m/%d/%Y, %H:%M:%S")
 
     cons.setFormatter(formatter)
     _logger.addHandler(cons)
