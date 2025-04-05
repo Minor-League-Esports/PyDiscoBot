@@ -1,3 +1,6 @@
+"""logger service to get a logger as a specified name, or the name of the file if none passed
+    """
+
 import logging
 
 

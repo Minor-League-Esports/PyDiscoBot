@@ -1,3 +1,6 @@
+"""user notification frame
+    """
+
 import discord
 from .frame import frame, EmbedField
 

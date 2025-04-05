@@ -1,7 +1,12 @@
+"""sync the bot's app tree for slash commands
+    this is required to populate new commands
+    or to update attrs to existing commands
+    """
+
 import discord
 from discord import app_commands
 from discord.ext import commands
-from ._cmd import Cmd
+from ...types import Cmd
 
 
 class Sync(Cmd):

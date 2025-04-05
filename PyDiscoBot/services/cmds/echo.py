@@ -1,6 +1,11 @@
+"""echo a string
+    mostly just a testing function
+    surprisingly, does support @ing people
+    """
+
 import discord
 from discord import app_commands
-from ._cmd import Cmd
+from ...types import Cmd
 
 
 class Echo(Cmd):

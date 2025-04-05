@@ -1,19 +1,22 @@
+"""run administrative functions for the bot
+    i.e. 'alive' status channel or any additional funcs required
+    """
+
 from datetime import datetime
 import discord
+from ..types.task import Task
 from ..services.channels import clear_messages
-from ..services.log import logger
 from ..embed_frames import admin
 
 
-class AdminTask:
+class AdminTask(Task):
     """admin task for generating channel embeds and mainting run info
     """
 
     def __init__(self,
                  parent):
+        super().__init__(parent)
         self._msg: discord.Message | None = None
-        self.parent = parent
-        self.logger = logger(__name__)
 
     async def _msg_ch(self):
         if not self.parent.admin_info.channels.admin:
@@ -44,6 +47,5 @@ class AdminTask:
     async def run(self):
         """run the admin task
         """
-        self.logger.info('running admin task...')
         await self._msg_ch()
         await self._admin()

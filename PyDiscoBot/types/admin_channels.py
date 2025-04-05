@@ -1,4 +1,7 @@
-from dataclasses import dataclass, field
+"""bot administrative channels
+    """
+
+from dataclasses import dataclass
 import discord
 
 
@@ -6,5 +9,5 @@ import discord
 class AdminChannels:
     """discord admin channels
     """
-    admin: discord.abc.GuildChannel | None = field(default_factory=lambda: None)
-    notification: discord.abc.GuildChannel | None = field(default_factory=lambda: None)
+    admin: discord.abc.GuildChannel | None = None
+    notification: discord.abc.GuildChannel | None = None

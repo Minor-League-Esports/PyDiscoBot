@@ -1,7 +1,10 @@
+"""provide a help display to discord users
+    """
+
 import discord
 from discord import app_commands
-from ._cmd import Cmd
-from ...embed_frames.frame import frame
+from ...embed_frames import frame
+from ...types import Cmd
 
 
 class Help(Cmd):

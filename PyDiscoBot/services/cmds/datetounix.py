@@ -1,9 +1,13 @@
+"""generate a unix date string for display common times across discord
+    (Time zone agnostic)
+    """
+
 import datetime
 import time
 import discord
 from discord import app_commands
-from ._cmd import Cmd
-from ...embed_frames import frame, EmbedField
+from ...embed_frames import frame
+from ...types import Cmd, EmbedField
 
 
 class DateToUnix(Cmd):

@@ -1,12 +1,13 @@
+"""PyDiscoBot - a bot by irox
+    """
+
 from .bot import Bot
-from .tasks import PeriodicTask
-from .types import BotNotLoaded, IllegalChannel, InsufficientPrivilege, ReportableError
-from .services.pagination import Pagination, InteractionPagination
-
+from .types import BotNotLoaded, EmbedField, IllegalChannel, InsufficientPrivilege
+from .types import ReportableError, Pagination, InteractionPagination
 from .services import const, cmds
-from .embed_frames import frame, EmbedField
+from .embed_frames import frame
 
-__version__ = "1.1.1"
+__version__ = "1.1.2"
 
 __all__ = (
     "Bot",
@@ -14,7 +15,6 @@ __all__ = (
     'IllegalChannel',
     'InsufficientPrivilege',
     'BotNotLoaded',
-    "PeriodicTask",
     "Pagination",
     "InteractionPagination",
     'const',

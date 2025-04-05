@@ -1,3 +1,6 @@
+"""provide logical services to operate on discord channels
+    """
+
 import discord
 
 

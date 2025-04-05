@@ -1,8 +1,14 @@
+"""create a scrollable / interactable callback display for user interaction
+    """
+
 from typing import Callable, Optional
 import discord
 
 
 class Pagination(discord.ui.View):
+    """interactable page scrolling view
+    """
+
     def __init__(self,
                  ctx: discord.ext.commands.Context,
                  get_page: Callable):

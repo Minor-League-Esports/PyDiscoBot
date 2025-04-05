@@ -1,14 +1,14 @@
-from . import const, channels, guilds, log, cmds
-from .pagination import Pagination, InteractionPagination
+"""PyDiscoBot logical services
+    commands, channels, constants, loggers, etc.
+    """
 
-__version__ = '1.1.1'
+from . import cmds, channels, const, log
+
+__version__ = '1.1.2'
 
 __all__ = (
-    'const',
     'cmds',
     'channels',
-    'guilds',
+    'const',
     'log',
-    'Pagination',
-    'InteractionPagination'
 )

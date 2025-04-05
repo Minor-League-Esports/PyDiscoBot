@@ -1,15 +1,10 @@
-from dataclasses import dataclass
+"""provide a generalized embed or 'frame' to create all other embeds from
+    this keeps the look nice and consistent
+    """
+
 import datetime
 import discord
-
-
-@dataclass
-class EmbedField:
-    """helper class to create embed fields more easily
-    """
-    name: str
-    value: str
-    inline: bool = False
+from ..types import EmbedField
 
 
 def frame(title: str,

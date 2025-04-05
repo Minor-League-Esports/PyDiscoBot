@@ -1,3 +1,6 @@
+"""provide error types for defining raise conditions
+    """
+
 from discord.ext import commands
 
 

@@ -1,9 +1,10 @@
-from .admin import AdminTask
-from .periodic_task import PeriodicTask
+"""PyDiscoBot built-in tasks
+    """
 
-__version__ = '1.1.1'
+from .admin import AdminTask
+
+__version__ = '1.1.2'
 
 __all__ = (
     'AdminTask',
-    'PeriodicTask'
 )

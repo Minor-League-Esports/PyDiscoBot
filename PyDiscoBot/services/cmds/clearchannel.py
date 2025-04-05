@@ -1,7 +1,11 @@
+"""clear discord channel of messages
+can only support up to 100, cannot delete older than 14 days (Discord rule)
+    """
+
 import discord
 from discord import app_commands
-from ._cmd import Cmd
 from ..channels import clear_messages
+from ...types import Cmd
 
 
 class ClearChannel(Cmd):

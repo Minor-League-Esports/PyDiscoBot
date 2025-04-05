@@ -1,3 +1,6 @@
+"""PyDiscoBot constants
+    """
+
 import os
 
 BOT_LOG_NAME = 'bot logger'
