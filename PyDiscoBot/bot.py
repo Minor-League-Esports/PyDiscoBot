@@ -1,220 +1,90 @@
-#!/usr/bin/env python
-""" Minor League E-Sports Bot
-# Author: irox_rl
-# Purpose: General Functions of a League Franchise summarized in bot fashion!
-# Version 1.0.6
-#
-# v1.0.6 - integrate for slash commands
-        update send_notification to include interactions if command is app_command
-"""
-
-# local imports #
-from .channels import get_channel_by_id
-from .commands import Commands
-from .err import register_callback, InsufficientPrivilege, IllegalChannel, BotNotLoaded, ReportableError
-from .periodic_task import PeriodicTask
-
-# non-local imports
 import asyncio
 import datetime
+import os
+from logging import Logger
 import discord
 from discord.ext import commands as disco_commands
 from discord import app_commands
-import dotenv
-import os
+from .embed_frames import notification
+from .services import const, channels
+from .services.cmds import Commands
+from .services.log import logger
+from .tasks.admin import AdminTask
+from .types import AdminInfo, IllegalChannel, BotNotLoaded, ReportableError
+from .types import InsufficientPrivilege, Tasker
 
 
 class Bot(discord.ext.commands.Bot):
-    """ Default bot by irox
+    """ bot by irox
     """
 
     def __init__(self,
                  command_prefix: str | list,
                  bot_intents: discord.Intents | None,
-                 command_cogs: [disco_commands.Cog]):
+                 command_cogs: list[disco_commands.Cog]):
         super().__init__(command_prefix=command_prefix,
-                         intents=bot_intents,
-                         help_command=None,
-                         case_insensitive=True)
-        self._version = os.getenv('VERSION')
-        if not self._version:
-            raise ValueError('Version not determined from .env file. Please use a valid .env file.')
-        try:
-            self._server_icon = os.getenv('SERVER_ICON')
-        except ValueError:
-            self._server_icon = None
+                         intents=bot_intents)
 
-        self._admin_channel: discord.TextChannel | None = None
-        self._notification_channel: discord.TextChannel | None = None
-        self._initialized = False
-        self._guild: discord.Guild | None = None
-        self._time = datetime.datetime.now()
-        self._last_time = self._time
-        self._start_time = datetime.datetime.now()
-        self._cycle_time = int(os.getenv('CYCLE_TIME'))
-        self._periodic_task: PeriodicTask = PeriodicTask(self.cycle_time,
-                                                         self,
-                                                         task_callback=self.on_task,
-                                                         enable_admin=True)
+        self._logger = logger(self.__class__.__name__)
+
+        self._admin_info = AdminInfo()
+        self._tasker = Tasker()
+
+        command_cogs.extend(Commands)
         for cog in command_cogs:
             asyncio.run(self.add_cog(cog(self)))
 
         self.tree.on_error = self.on_tree_error
-        register_callback(self.__err__)
 
     @property
-    def admin_channel(self) -> discord.TextChannel | None:
-        """ return the admin channel
+    def admin_info(self) -> AdminInfo:
+        """ return admin info for the bot
         """
-        return self._admin_channel
+        return self._admin_info
 
     @property
-    def cycle_time(self) -> int:
-        """ return the cycle time
-                """
-        return self._cycle_time
+    def logger(self) -> Logger:
+        return self._logger
 
-    @property
-    def day_of_week(self) -> str:
-        """ return the day of week, formatted as yyyy-mm-dd hh:mm:ss
-                """
-        return self._time.strftime('%A')
-
-    @property
-    def default_embed_color(self):
-        """ return the discord.color for an embed object to use
-            Over-ride this property to use a different color
-        """
-        return discord.Color.dark_blue()
-
-    @property
-    def guild(self) -> discord.Guild:
-        return self._guild
-
-    @property
-    def loaded(self) -> bool:
-        """ loaded status for bot\n
-        override to include external processes that need to load when initiating
-        """
-        return self._periodic_task.initialized and self._initialized
-
-    @property
-    def notification_channel(self) -> discord.TextChannel | None:
-        return self._notification_channel
-
-    @property
-    def last_time(self):
-        return self._last_time
-
-    @property
-    def server_icon(self):
-        return self._server_icon
-
-    @property
-    def time(self) -> datetime.datetime:
-        return self._time
-
-    @property
-    def version(self) -> str:
-        """ return the version of this repo
-                                """
-        return self._version
-
-    async def begin_task(self) -> None:
-        """ Begin periodic task\n
+    async def notify(self,
+                     message: str | Exception) -> None:
+        """ Helper function to send error or notification messages to notify channel with a single parameter.\n
+        **If a notification channel does not exist**, the notification is printed to console instead\n
+        **param message**: message to report\n
         **returns**: None\n
         """
-        self._periodic_task.change_interval(seconds=self.cycle_time)
-        self._periodic_task.run.start()
-
-    def default_embed(self,
-                      title: str,
-                      description: str = '',
-                      color=None) -> discord.Embed:
-        """ Helper function to easily and repeatedly get the same embed\n
-            **param title**: title of the embed\n
-            **param description**: description to create the embed with\n
-            **returns**: discord.Embed with name and description supplied
-         """
-        # this should be updated to be a class method, along with the default color
-        if not color:
-            color = self.default_embed_color
-        return discord.Embed(color=color,
-                             title=title,
-                             description=description)
-
-    async def __err__(self,
-                      message: str | Exception) -> None:
-        """ Helper function to send error or notification messages to notify channel with a single parameter.\n
-            **If a notification channel does not exist**, the notification is printed to console instead\n
-            **param message**: message to report\n
-            **returns**: None\n
-            """
         if not message:
             return
-        if not self._notification_channel:
+        if not self._admin_info.channels.notification:
             return print(message)
-        await self.send_notification(ctx=self._notification_channel,
+        await self.send_notification(ctx=self._admin_info.channels.notification,
                                      text=message,
                                      as_reply=False)
 
-    async def get_app_cmds_by_user(self,
-                                   ctx: discord.ext.commands.Context) -> [disco_commands.command]:
-        return self.tree.walk_commands()
-
-    async def get_help_cmds_by_user(self,
-                                    ctx: discord.ext.commands.Context) -> [disco_commands.command]:
-        return self.commands
-
-    async def get_notification_embed(self,
-                                     text: str) -> discord.Embed:
-        embed = (self.default_embed('**Notification**')
-                 .add_field(name='Message', value=text, inline=True)
-                 .set_footer(text=f'Generated: {datetime.datetime.now()}'))
-        if self._server_icon:
-            embed.set_thumbnail(url=self._server_icon)
-        return embed
-
     async def send_notification(self,
-                                ctx: discord.ext.commands.Context | discord.abc.GuildChannel | discord.Interaction,
+                                ctx: discord.abc.Messageable,
                                 text: str,
                                 as_reply: bool = False,
                                 as_followup: bool = False) -> None:
-        """ Helper function to send notifications as required to a specific context, also as reply if required\n
+        """ Helper function to send notifications
         """
-        embed = await self.get_notification_embed(text)
-
         if isinstance(ctx, discord.ext.commands.Context):
-            await ctx.reply(embed=embed) if as_reply and (ctx.author is not None) else await ctx.send(embed=embed)
-            return
+            if as_reply and ctx.author is not None:
+                await ctx.reply(embed=notification(text))
+            else:
+                await ctx.send(embed=notification(text))
 
         elif isinstance(ctx, discord.Interaction):
             if as_followup:
-                return await ctx.followup.send(embed=embed)
+                await ctx.followup.send(embed=notification(text))
             else:
                 try:
-                    return await ctx.response.send_message(embed=embed)
+                    return await ctx.response.send_message(embed=notification(text))
                 except discord.errors.InteractionResponded:
-                    return await ctx.followup.send(embed=embed)
+                    return await ctx.followup.send(embed=notification(text))
 
         elif isinstance(ctx, discord.TextChannel):
-            await ctx.send(embed=embed)
-            return
-
-    def info_embed(self) -> discord.Embed:
-        """ helper to get information embed\n
-            **returns**: discord.Embed with bot info attached\n
-        """
-        embed = discord.Embed(color=self.default_embed_color, title='**Bot Info**\n\n',
-                              description='For help, type `ub.help`\n\n')
-        embed.add_field(name='Version', value=f"`{self.version}`", inline=True)
-        embed.add_field(name='Boot Time', value=f"`{self._start_time.strftime('%c')}`", inline=False)
-        embed.add_field(name='Current Tick', value=f"`{self._periodic_task.ticks}`", inline=True)
-        embed.add_field(name='Last Time', value=f"`{datetime.datetime.now().strftime('%c')}`", inline=False)
-        embed.add_field(name='Cycle Time', value=f"`{self.cycle_time}` seconds", inline=True)
-        if self._server_icon:
-            embed.set_thumbnail(url=self._server_icon)
-        return embed
+            await ctx.send(embed=notification(text))
 
     async def on_command_error(self,
                                ctx: discord.ext.commands.Context,
@@ -224,45 +94,49 @@ class Bot(discord.ext.commands.Bot):
             If not, raise the error naturally\n
             """
         if isinstance(error, discord.ext.commands.errors.CommandNotFound):
-            await ctx.reply("That command wasn't found! Type 'ub.help' for a list of all available commands.")
-            return
-        if isinstance(error, discord.ext.commands.errors.MissingRequiredArgument):
-            await ctx.reply(f'You must fill in additional arguments for this command!\n{error}')
-            return
+            await ctx.reply(const.ERR_BAD_CMD)
+        elif isinstance(error, discord.ext.commands.errors.MissingRequiredArgument):
+            await ctx.reply(const.ERR_MSG_PARAM)
         elif isinstance(error, discord.HTTPException):
-            await ctx.reply('We are being rate limited... Please wait a few moments before trying that again.')
-            return
+            await ctx.reply(const.ERR_RATE_LMT)
         elif isinstance(error, InsufficientPrivilege):
-            await ctx.reply(error.__str__())
-            return
+            await ctx.reply(const.ERR_BAD_PRV)
         elif isinstance(error, IllegalChannel):
-            await ctx.reply(error.__str__())
-            return
+            await ctx.reply(const.ERR_BAD_CH)
         elif isinstance(error, BotNotLoaded):
-            await ctx.reply(error.__str__())
-            return
+            await ctx.reply(const.ERR_BOT_NL)
         elif isinstance(error, ReportableError):
-            await ctx.reply(error.__str__())
-            return
+            await ctx.reply(str(error))
         else:
-            await self.__err__(f'We have encountered the following error:\n{error.__str__()}')
+            await self.notify(f'Error encountered:\n{str(error)}')
             raise error
 
     async def on_tree_error(self,
                             interaction: discord.Interaction,
                             error: app_commands.AppCommandError):
+        """override of parent error method
+
+        Args:
+            interaction (discord.Interaction): interaction that caused the error
+            error (app_commands.AppCommandError): error raised
+        """
         if isinstance(error, app_commands.CommandOnCooldown):
-            return await interaction.response.send_message(f"Command is currently on cooldown! Try again in **{error.retry_after:.2f}** seconds!")
+            await interaction.response.send_message(const.ERR_RATE_LMT)
+            return
 
         elif isinstance(error, app_commands.MissingPermissions):
-            return await interaction.response.send_message(f"You're missing permissions to use that")
+            await interaction.response.send_message(const.ERR_BAD_PRV)
+            return
 
         elif isinstance(error, discord.app_commands.CommandInvokeError):
             if isinstance(error.original, ReportableError):
-                return await self.send_notification(interaction,
-                                                    error.original.__str__(),
-                                                    as_followup=False)
-        await self.__err__(error.__str__())
+                await self.send_notification(interaction,
+                                             str(error.original),
+                                             as_followup=False)
+                return
+
+        await self.notify(error)
+        raise error
 
     async def on_ready(self,
                        suppress_task=False) -> None:
@@ -270,71 +144,33 @@ class Bot(discord.ext.commands.Bot):
         **param suppress_task**: if True, do NOT run periodic task at the end of this call\n
         **returns**: None\n
         """
-        if self._initialized:
+        self._logger.info('PyDiscoBot on_ready...')
+        if self._admin_info.initialized:
+            self._logger.warning('already initialized!')
             return
 
-        guild_token = os.getenv('GUILD')
         admin_channel_token = os.getenv('ADMIN_CHANNEL')
         notification_channel_token = os.getenv('NOTIFICATION_CHANNEL')
 
-        if not guild_token:
-            raise ValueError('guild token must be supplied in .env file!')
-        self._guild = next((x for x in self.guilds if x.id.__str__() == guild_token), None)
-        if self._guild is None:
-            raise ValueError('Supplied guild is not available to this bot.\n'
-                             'Please invite the bot to the rubber duck pond')
+        if admin_channel_token:
+            self._logger.info('initializing admin channel...')
+            self._admin_info.channels.admin = channels.find_ch(self.guilds,
+                                                               admin_channel_token)
+            if not self._admin_info.channels.admin:
+                self._logger.warning('admin channel not found...')
+            else:
+                self._tasker.append(AdminTask(self))
 
-        self._admin_channel = get_channel_by_id(admin_channel_token,
-                                                self._guild) if admin_channel_token else None
-        self._notification_channel = get_channel_by_id(notification_channel_token,
-                                                       self._guild) if notification_channel_token else None
-        self._initialized = True
+        if notification_channel_token:
+            self._logger.info('initializing notification channel...')
+            self._admin_info.channels.notification = channels.find_ch(self.guilds,
+                                                                      notification_channel_token)
+            if not self._admin_info.channels.notification:
+                self._logger.warning('notification channel not found...')
 
-        print(f"POST -> {datetime.datetime.now().strftime('%c')}")
+        self._admin_info.initialized = True
+        self._logger.info("POST -> %s", datetime.datetime.now().strftime('%c'))
 
         if not suppress_task:
-            await self.begin_task()
-
-    async def on_task(self) -> None:
-        """ callback method for periodic task to call during it's interval\n
-            override this as needed
-        **returns**: None\n
-        """
-        pass
-
-
-if __name__ == '__main__':
-    """ common call for .py file.
-        if this file is called, the code below is run
-        if this file is imported, it will not run
-        """
-    """ load dotenv before generating bot
-    """
-    dotenv.load_dotenv()
-
-    """ generate intents for bot
-        the compiler doesn't like that it thinks these properties are read-only, but they're not.
-        the following boolean assignments are required for this bot to function
-        """
-    intents = discord.Intents(8)
-    # noinspection PyDunderSlots
-    intents.guilds = True
-    # noinspection PyDunderSlots
-    intents.members = True
-    # noinspection PyDunderSlots
-    intents.message_content = True
-    # noinspection PyDunderSlots
-    intents.messages = True
-
-    """ generate bot
-        load bot params from .env file
-        do not modify this code!
-        modify the .env!
-        include any task args at the end!
-    """
-    bot = Bot('ub.',
-              intents,
-              command_cogs=[Commands])
-    """ Start 
-    """
-    bot.run(os.getenv('DISCORD_TOKEN'))
+            self._tasker.run.change_interval(seconds=self.admin_info.cycle_time)
+            self._tasker.run.start()
