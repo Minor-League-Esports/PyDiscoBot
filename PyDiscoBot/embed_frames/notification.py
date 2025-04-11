@@ -1,11 +1,13 @@
 """user notification frame
     """
+from __future__ import annotations
 
 import discord
-from .frame import frame, EmbedField
+from pydiscobot.types import EmbedField
+from .frame import get_frame
 
 
-def notification(text: str) -> discord.Embed:
+def get_notification(text: str) -> discord.Embed:
     """get notification embed
 
     Args:
@@ -14,7 +16,7 @@ def notification(text: str) -> discord.Embed:
     Returns:
         discord.Embed: notification embed with text included
     """
-    embed = frame('**Notification**',
-                  None,
-                  [EmbedField('Message', value=text, inline=True)])
+    embed = get_frame('**Notification**',
+                      None,
+                      [EmbedField('Message', value=text, inline=True)])
     return embed

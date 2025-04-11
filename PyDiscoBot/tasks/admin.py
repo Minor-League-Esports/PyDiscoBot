@@ -6,7 +6,7 @@ from datetime import datetime
 import discord
 from ..types.task import Task
 from ..services.channels import clear_messages
-from ..embed_frames import admin
+from ..embed_frames import get_admin_frame
 
 
 class AdminTask(Task):
@@ -25,13 +25,13 @@ class AdminTask(Task):
 
         if self._msg:
             try:
-                await self._msg.edit(embed=admin(self.parent.admin_info))
+                await self._msg.edit(embed=get_admin_frame(self.parent.admin_info))
                 return
             except (discord.errors.NotFound, AttributeError, discord.errors.DiscordServerError):
                 self.logger.info('creating new message...')
 
         await clear_messages(self.parent.admin_info.channels.admin, 100)
-        self._msg = await self.parent.admin_info.channels.admin.send(embed=admin(self.parent.admin_info))
+        self._msg = await self.parent.admin_info.channels.admin.send(embed=get_admin_frame(self.parent.admin_info))
 
     def _time(self):
         """ time function

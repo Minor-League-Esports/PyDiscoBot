@@ -22,7 +22,7 @@ def find_ch(guilds: list[discord.Guild],
     return None
 
 
-async def clear_messages(channel: discord.channel,
+async def clear_messages(channel: discord.abc.GuildChannel,
                          count: int) -> bool:
     """ Helper function to clear a channel of messages\n
         Max channel message delete count is 100\n

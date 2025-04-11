@@ -1,6 +1,6 @@
 """PyDiscoBot built-in types
     """
-
+from . import unittest
 from .admin_info import AdminInfo
 from .cmd import Cmd
 from .embed_field import EmbedField
@@ -9,7 +9,7 @@ from .pagination import Pagination, InteractionPagination
 from .task import Task
 from .tasker import Tasker
 
-__version__ = '1.1.2'
+__version__ = '1.1.3'
 
 __all__ = (
     'AdminInfo',
@@ -23,4 +23,5 @@ __all__ = (
     'ReportableError',
     'Task',
     'Tasker',
+    'unittest',
 )

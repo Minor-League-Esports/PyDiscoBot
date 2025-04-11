@@ -1,17 +1,18 @@
 """provide a generalized embed or 'frame' to create all other embeds from
     this keeps the look nice and consistent
     """
+from __future__ import annotations
 
 import datetime
 import discord
-from ..types import EmbedField
+from pydiscobot.types import EmbedField
 
 
-def frame(title: str,
-          descr: str | None = None,
-          fields: list[EmbedField] | None = None,
-          color: str = str(discord.Color.dark_blue()),
-          thumbnail: str = None) -> discord.Embed:
+def get_frame(title: str,
+              descr: str | None = None,
+              fields: list[EmbedField] | None = None,
+              color: str = str(discord.Color.dark_blue()),
+              thumbnail: str = None) -> discord.Embed:
     """get generic embed frame for consistent formatting.
 
     Args:

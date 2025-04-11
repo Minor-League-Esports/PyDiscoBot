@@ -4,13 +4,13 @@ can only support up to 100, cannot delete older than 14 days (Discord rule)
 
 import discord
 from discord import app_commands
-from ..channels import clear_messages
-from ...types import Cmd
+from pydiscobot.services.channels import clear_messages
+from pydiscobot.types import Cmd
 
 
 class ClearChannel(Cmd):
-    """clear text channel
-    """
+    """ClearChannel command cog.
+        """
 
     @app_commands.command(name='clearchannel',
                           description='Clear channel messages.')
@@ -19,11 +19,14 @@ class ClearChannel(Cmd):
     async def clearchannel(self,
                            interaction: discord.Interaction,
                            message_count: int):
-        """'Clear channel messages. Include amt of messages to delete.'
+        """Clear a discord :class:`TextChannel` of messages.
 
-        Args:
-            interaction (discord.Interaction): interaction source
-            message_count (int): amt of msgs to delete
+        Arguments
+        -----------
+        interaction: :class:`discord.Interaction`
+            The interaction this command belongs to.
+        message_count: :class:`int`
+            Number of messages to delete. Must be < 100.
         """
         await interaction.response.defer()
         await clear_messages(interaction.channel, message_count)

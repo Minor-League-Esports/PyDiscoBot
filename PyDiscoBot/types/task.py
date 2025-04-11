@@ -4,7 +4,7 @@
 from abc import ABC, abstractmethod
 from logging import Logger
 from typing import Any
-from ..services.log import logger
+from pydiscobot.services import log
 
 
 class Task(ABC):
@@ -14,7 +14,16 @@ class Task(ABC):
     def __init__(self,
                  parent):
         self._parent = parent
-        self._logger = logger(self.__class__.__name__)
+        self._logger = log.logger(self.__class__.__name__)
+
+    @property
+    def name(self) -> str:
+        """get the name of this task
+
+        Returns:
+            str: name
+        """
+        return self.__class__.__name__
 
     @property
     def logger(self) -> Logger:

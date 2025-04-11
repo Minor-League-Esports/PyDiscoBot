@@ -1,10 +1,11 @@
 """provide a help display to discord users
     """
+from __future__ import annotations
 
 import discord
 from discord import app_commands
-from ...embed_frames import frame
-from ...types import Cmd
+from pydiscobot.embed_frames import frame
+from pydiscobot.types import Cmd
 
 
 class Help(Cmd):
@@ -21,6 +22,6 @@ class Help(Cmd):
         Args:
             interaction (discord.Interaction): discord interaction
         """
-        embed = frame(
+        embed = frame.get_frame(
             '**help**', 'If you have an issue, please reach out to `irox_rl`.')
         await interaction.response.send_message(embed=embed)

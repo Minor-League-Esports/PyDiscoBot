@@ -1,12 +1,13 @@
 """admin embed
     """
+from __future__ import annotations
 
 import discord
-from .frame import frame
-from ..types import AdminInfo, EmbedField
+from pydiscobot.types import AdminInfo, EmbedField
+from .frame import get_frame
 
 
-def admin(info: AdminInfo) -> discord.Embed:
+def get_admin_frame(info: AdminInfo) -> discord.Embed:
     """admin info embed
 
     Args:
@@ -15,14 +16,14 @@ def admin(info: AdminInfo) -> discord.Embed:
     Returns:
         discord.Embed: embed
     """
-    embed = frame('**Bot Info**',
-                  'For help, type `/help`',
-                  [
-                      EmbedField('Version', f"`{info.version}`"),
-                      EmbedField('Boot Time', f"`{info.boot_time.strftime('%c')}`", True),
-                      EmbedField('Current Tick', f"`{info.current_tick}`"),
-                      EmbedField('Last Time', f"`{info.last_time}`"),
-                      EmbedField('Cycle Time', f"`{info.cycle_time}`s", True)
-                  ])
+    embed = get_frame('**Bot Info**',
+                      'For help, type `/help`',
+                      [
+                          EmbedField('Version', f"`{info.version}`"),
+                          EmbedField('Boot Time', f"`{info.boot_time.strftime('%c')}`", True),
+                          EmbedField('Current Tick', f"`{info.current_tick}`"),
+                          EmbedField('Last Time', f"`{info.last_time}`"),
+                          EmbedField('Cycle Time', f"`{info.cycle_time}`s", True)
+                      ])
 
     return embed

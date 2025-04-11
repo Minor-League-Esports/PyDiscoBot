@@ -1,11 +1,16 @@
+"""irox implimentation of Discord.Bot class
+    """
+from __future__ import annotations
+
 import asyncio
 import datetime
 import os
 from logging import Logger
+from typing import Union
 import discord
 from discord.ext import commands as disco_commands
 from discord import app_commands
-from .embed_frames import notification
+from .embed_frames import get_notification
 from .services import const, channels
 from .services.cmds import Commands
 from .services.log import logger
@@ -14,21 +19,68 @@ from .types import AdminInfo, IllegalChannel, BotNotLoaded, ReportableError
 from .types import InsufficientPrivilege, Tasker
 
 
-class Bot(discord.ext.commands.Bot):
-    """ bot by irox
+class Bot(disco_commands.Bot):
+    """Represents a Discord bot, wrapped with built-in logic
+
+    This class is a subclass of :class:`discord.ext.commands.Bot` and as a result
+    anything that you can do with a :class:`discord.ext.commands.Bot` you can do with
+    this bot. To note, :class:`discord.ext.commands.Bot` is a subclass of
+     :class:`discord.Client`, meaning this bot can also perform all :class:`discord.Client` tasks.
+
+    Arguments
+    -----------
+    command_prefix: Union[:class:`str`, :class:`list`]
+        A legacy command prefix. Supports :class:`callable` by default.
+        However, this is not the intended design strategy.
+        We consume a string for a prefix to allow for certain commands,
+        such as 'Sync' but most other commands are built only for app_commands
+        or 'Slash' commands.
+    bot_intents: :class:`discord.Intents`
+        The discord intents this bot has been registered for.
+        This should reflect the permissions the bot has in the server it would be operating in.
+        The Discord Developer Portal has a tool to help create the integer required for this class.
+    command_cogs: list[:class:`discord.ext.commands.Cog`]
+        A list of commands to append to this bot when initializing.
+        During the __init__ call, this list will be appended asyncronously to the bot's cogs.
+        After modifying what commands a bot has access to, or the parameters of the commands, 
+        a 'sync' command will be required to sync the bot tree.
+
+    Examples
+    ----------
+
+        Initialize a bot with a few custom made command cogs ::
+
+            import os
+            import discord
+            import dotenv
+            from pydiscobot import Bot
+            from my_command_module import my_commands
+            from their_command_module import their_commands
+
+
+            if __name__ == '__main__':
+                dir_path = os.path.dirname(os.path.realpath(__file__))
+                dotenv.load_dotenv(f'{dir_path}/.env')
+                intents = discord.Intents(8)
+                bot = Bot('!',
+                          intents,
+                          [my_commands, their_commands])
+                bot.run(os.getenv('DISCORD_TOKEN'))
     """
 
     def __init__(self,
-                 command_prefix: str | list,
-                 bot_intents: discord.Intents | None,
+                 command_prefix: Union[str, list],
+                 bot_intents: discord.Intents,
                  command_cogs: list[disco_commands.Cog]):
         super().__init__(command_prefix=command_prefix,
                          intents=bot_intents)
 
         self._logger = logger(self.__class__.__name__)
+        self.logger.info('initializing...')
 
         self._admin_info = AdminInfo()
         self._tasker = Tasker()
+        self._tasker.append(AdminTask(self))
 
         command_cogs.extend(Commands)
         for cog in command_cogs:
@@ -44,7 +96,21 @@ class Bot(discord.ext.commands.Bot):
 
     @property
     def logger(self) -> Logger:
+        """get logger of the bot
+
+        Returns:
+            Logger: logger
+        """
         return self._logger
+
+    @property
+    def tasker(self) -> Tasker:
+        """get this bot's task list
+
+        Returns:
+            Tasker: task list (Tasker)
+        """
+        return self._tasker
 
     async def notify(self,
                      message: str | Exception) -> None:
@@ -70,21 +136,21 @@ class Bot(discord.ext.commands.Bot):
         """
         if isinstance(ctx, discord.ext.commands.Context):
             if as_reply and ctx.author is not None:
-                await ctx.reply(embed=notification(text))
+                await ctx.reply(embed=get_notification(text))
             else:
-                await ctx.send(embed=notification(text))
+                await ctx.send(embed=get_notification(text))
 
         elif isinstance(ctx, discord.Interaction):
             if as_followup:
-                await ctx.followup.send(embed=notification(text))
+                await ctx.followup.send(embed=get_notification(text))
             else:
                 try:
-                    return await ctx.response.send_message(embed=notification(text))
+                    return await ctx.response.send_message(embed=get_notification(text))
                 except discord.errors.InteractionResponded:
-                    return await ctx.followup.send(embed=notification(text))
+                    return await ctx.followup.send(embed=get_notification(text))
 
         elif isinstance(ctx, discord.TextChannel):
-            await ctx.send(embed=notification(text))
+            await ctx.send(embed=get_notification(text))
 
     async def on_command_error(self,
                                ctx: discord.ext.commands.Context,
@@ -140,9 +206,10 @@ class Bot(discord.ext.commands.Bot):
 
     async def on_ready(self,
                        suppress_task=False) -> None:
-        """ Method that is called by discord when the bot connects to the supplied guild\n
-        **param suppress_task**: if True, do NOT run periodic task at the end of this call\n
-        **returns**: None\n
+        """method called by discord api when the bot connects to the gateway server and is ready for production
+
+        Args:
+            suppress_task (bool, optional): run periodic task or not. Defaults to False.
         """
         self._logger.info('PyDiscoBot on_ready...')
         if self._admin_info.initialized:
@@ -158,8 +225,6 @@ class Bot(discord.ext.commands.Bot):
                                                                admin_channel_token)
             if not self._admin_info.channels.admin:
                 self._logger.warning('admin channel not found...')
-            else:
-                self._tasker.append(AdminTask(self))
 
         if notification_channel_token:
             self._logger.info('initializing notification channel...')
