@@ -46,20 +46,31 @@ class DateToUnix(Cmd):
 
         Date is placed into embed, broken apart, so it can be copied and pasted by the user.
 
+        .. ------------------------------------------------------------
+
         Arguments
         -----------
+        interaction: :class:`discord.Interaction`
+            The interaction this command belongs to.
+
         year: :class:`int`
             Year to display.
+
         month: :class:`int`
             Month to display.
+
         day: :class:`int`
             Day to display.
+
         hour: :class:`int`
             Hour to display.
+
         minute: :class:`int`
             Minute to display.
+
         second: :class:`int`
             Second to display.
+
         """
         try:
             _d = f'{year}/{month}/{day} {hour}:{minute}:{second}'

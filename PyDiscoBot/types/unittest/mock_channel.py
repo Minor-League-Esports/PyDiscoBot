@@ -25,3 +25,17 @@ class MockChannel(discord.TextChannel):
             'guild': MockChannel.guild if not guild else guild
         }
         super().__init__(state=MockChannel.state, guild=data['guild'], data=data)
+
+    async def delete_messages(self,
+                              *args,
+                              **kwargs):
+        """dummy method
+        """
+
+    async def history(self,
+                      *args,
+                      **kwargs):
+        """dummy method
+        """
+        for _ in range(0, 0):
+            yield None

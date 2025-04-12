@@ -2,11 +2,12 @@
     this is required to populate new commands
     or to update attrs to existing commands
     """
+from __future__ import annotations
 
 import discord
 from discord import app_commands
 from discord.ext import commands
-from ...types import Cmd
+from pydiscobot.types import Cmd
 
 
 class Sync(Cmd):
@@ -17,10 +18,21 @@ class Sync(Cmd):
                           description='Sync bot app tree.')
     async def app_cmd_sync(self,
                            interaction: discord.Interaction):
-        """sync discord bot tree to server
+        """Sync bot app tree.
 
-        Args:
-            interaction (discord.Interaction): discord interaction
+        This command is required when the signature of a command changes.
+        It is also required when a new command is created.
+
+        Usually, you will need to restart your `Discord Application` to see the new changes.
+        Otherwise, the Discord API will respond with an err.
+
+        .. ------------------------------------------------------------
+
+        Arguments
+        -----------
+        interaction: :class:`discord.Interaction`
+            The interaction this command belongs to.
+
         """
         await interaction.response.defer()
         await self._parent.tree.sync()
@@ -32,10 +44,21 @@ class Sync(Cmd):
                       description='Sync bot app tree.')
     async def sync(self,
                    ctx: discord.ext.commands.Context):
-        """sync discord bot tree to server
+        """Sync bot app tree.
 
-        Args:
-            interaction (discord.Interaction): discord interaction
+        This command is required when the signature of a command changes.
+        It is also required when a new command is created.
+
+        Usually, you will need to restart your `Discord Application` to see the new changes.
+        Otherwise, the Discord API will respond with an err.
+
+        .. ------------------------------------------------------------
+
+        Arguments
+        -----------
+        interaction: :class:`discord.Interaction`
+            The interaction this command belongs to.
+
         """
         await self._parent.tree.sync()
         await self._parent.send_notification(ctx,

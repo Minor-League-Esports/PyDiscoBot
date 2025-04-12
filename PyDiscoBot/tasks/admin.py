@@ -1,22 +1,52 @@
 """run administrative functions for the bot
     i.e. 'alive' status channel or any additional funcs required
     """
+from __future__ import annotations
 
 from datetime import datetime
+from typing import Optional
 import discord
-from ..types.task import Task
-from ..services.channels import clear_messages
-from ..embed_frames import get_admin_frame
+import pydiscobot
+from pydiscobot.types import Task
+from pydiscobot.services import channels
+from pydiscobot import embed_frames
 
 
 class AdminTask(Task):
-    """admin task for generating channel embeds and mainting run info
+    """Administrative task for :class:`pydiscobot.Bot`.
+
+    Manages updating :class:`AdminInfo`.
+    Also manages posting infos to admin :class:`discord.TextChannel` (if it exists).
+
+    .. ------------------------------------------------------------
+
+    Arguments
+    -----------
+    parent: :class:`pydiscobot.Bot`
+        The bot this task belongs to.
+
+    .. ------------------------------------------------------------
+
+    Attributes
+    -----------
+    message: :class:`discord.Message`
+        get the :class:`discord.Message` this :class:`Task` is managing.
+
+    .. ------------------------------------------------------------
     """
 
     def __init__(self,
-                 parent):
+                 parent: pydiscobot.Bot):
         super().__init__(parent)
-        self._msg: discord.Message | None = None
+        self._msg: Optional[discord.Message] = None
+
+    @property
+    def message(self) -> Optional[discord.Message]:
+        """get the :class:`discord.Message` this :class:`Task` is managing.
+
+        Returns:
+            :class:`discord.Message` | :type:`None`: :class:`AdminTask`'s message.
+        """
 
     async def _msg_ch(self):
         if not self.parent.admin_info.channels.admin:
@@ -25,13 +55,15 @@ class AdminTask(Task):
 
         if self._msg:
             try:
-                await self._msg.edit(embed=get_admin_frame(self.parent.admin_info))
+                await self._msg.edit(embed=embed_frames.get_admin_frame(self.parent.admin_info))
                 return
             except (discord.errors.NotFound, AttributeError, discord.errors.DiscordServerError):
                 self.logger.info('creating new message...')
 
-        await clear_messages(self.parent.admin_info.channels.admin, 100)
-        self._msg = await self.parent.admin_info.channels.admin.send(embed=get_admin_frame(self.parent.admin_info))
+        await channels.clear_messages(self.parent.admin_info.channels.admin, 100)
+        self._msg = await self.parent.admin_info.channels.admin.send(
+            embed=embed_frames.get_admin_frame(self.parent.admin_info)
+        )
 
     def _time(self):
         """ time function

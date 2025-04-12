@@ -4,7 +4,7 @@ from .bot import Bot
 from .types import BotNotLoaded, EmbedField, IllegalChannel, InsufficientPrivilege
 from .types import ReportableError, Pagination, InteractionPagination
 from .services import const, cmds
-from .embed_frames import get_frame
+from . import embed_frames
 
 __version__ = "1.1.3"
 
@@ -18,6 +18,6 @@ __all__ = (
     "InteractionPagination",
     'const',
     'cmds',
-    'get_frame',
+    'embed_frames',
     'EmbedField',
 )

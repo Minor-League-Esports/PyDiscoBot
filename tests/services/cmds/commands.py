@@ -3,14 +3,46 @@
 import asyncio
 import unittest
 import discord
+from tests.types import MockBot
 from pydiscobot.types.unittest import MockInteraction
 from pydiscobot.services.cmds.datetounix import ERR
-from tests.types import MockBot
 
 
 class TestCommands(unittest.TestCase):
     """test commands for pydisco bot
     """
+
+    def test_clearchannel(self):
+        """test clearchannel command
+        """
+        bot = MockBot.as_ready()
+
+        cog = bot.cogs['ClearChannel']
+        self.assertIsNotNone(cog)
+
+        cmd = next((x for x in cog.get_app_commands() if x is not None), None)
+        self.assertIsNotNone(cmd)
+
+        # do it
+        asyncio.run(cmd.callback(self=cmd,
+                                 interaction=MockInteraction(),
+                                 message_count=10))
+
+        # check upper level err
+        with self.assertRaises(ValueError) as context:
+            asyncio.run(cmd.callback(self=cmd,
+                                     interaction=MockInteraction(),
+                                     message_count=250))
+
+        self.assertTrue(isinstance(context.exception, ValueError))
+
+        # check lwr level err
+        with self.assertRaises(ValueError) as context:
+            asyncio.run(cmd.callback(self=cmd,
+                                     interaction=MockInteraction(),
+                                     message_count=0))
+
+        self.assertTrue(isinstance(context.exception, ValueError))
 
     def test_datetounix(self):
         """test datetounix command
@@ -72,3 +104,41 @@ class TestCommands(unittest.TestCase):
         asyncio.run(echo_cmd.callback(self=echo_cmd,
                                       interaction=MockInteraction(test_callback),
                                       message=sent_value))
+
+    def test_help(self):
+        """test help command
+        """
+        bot = MockBot.as_ready()
+
+        cog = bot.cogs['Help']
+        self.assertIsNotNone(cog)
+
+        cmd = next((x for x in cog.get_app_commands() if x is not None), None)
+        self.assertIsNotNone(cmd)
+
+        async def test_callback(embed):
+            self.assertTrue(isinstance(embed, discord.Embed))
+
+        # create dummy interaction
+        # run the command to validate at least an echo works with a built bot
+        asyncio.run(cmd.callback(self=cmd,
+                                 interaction=MockInteraction(test_callback)))
+
+    def test_sync(self):
+        """test sync command
+        """
+        bot = MockBot.as_ready()
+
+        cog = bot.cogs['Sync']
+        self.assertIsNotNone(cog)
+
+        cmd = next((x for x in cog.get_app_commands() if x is not None), None)
+        self.assertIsNotNone(cmd)
+
+        # check err raises by discord package
+        # this `should` err anyways, we've made a mock struct after all
+        with self.assertRaises(discord.app_commands.errors.MissingApplicationID) as context:
+            asyncio.run(cmd.callback(self=cog,
+                                     interaction=MockInteraction()))
+
+        self.assertTrue(isinstance(context.exception, discord.app_commands.errors.MissingApplicationID))

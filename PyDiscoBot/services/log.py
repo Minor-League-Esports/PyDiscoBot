@@ -10,13 +10,47 @@ loggers = {}  # quick hash dict for loggers
 
 
 def logger(name: str = __name__):
-    """get common logger
+    """Get a :class:`Logger` of the specified name, creating one if none already exists.
 
-    Args:
-        name (str, optional): name of logger. Defaults to __name__.
+    Each :class:`Logger` is hashed and stored locally.
 
-    Returns:
-        logging.Logger: logger
+    .. ------------------------------------------------------------
+
+    Arguments
+    -----------
+
+    name: :class:`str`
+        The name of the :class:`Logger` to get or create.
+
+
+    .. ------------------------------------------------------------
+
+    Returns
+    --------
+    :class:`Logger`
+        `logging.Logger`, ready to display information.
+
+    .. ------------------------------------------------------------
+
+    Examples
+    ----------
+
+    Get a logger for a :type:`class` using the :type:`class`'s name
+
+    .. code-block:: python
+
+        from pydiscobot.services.log import logger
+
+        class MyClass:
+        'This is my class!'
+        def __init__(self):
+            self._logger = logger(self.__class__.__name__)
+            self._logger.info('This is a great way to get my logger!')
+
+
+        >>> r'06/9/2025, 12:04:20 | MyClass | INFO | This is a great way to get my logger!'
+
+
     """
     if loggers.get(name):
         return loggers.get(name)

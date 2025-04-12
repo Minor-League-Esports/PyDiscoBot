@@ -11,28 +11,36 @@ class AdminInfo:
 
     This data class describes the meta information about the bot.
 
+    .. ------------------------------------------------------------
+
     Attributes
     -----------
     version: :class:`str`
         Current running version the :class:`Bot` booted with.
+
     boot_time: :class:`datetime.datetime`
         Datetime describing the moment the bot initialized this class.
+
     last_time: :class:`datetime.datetime`
         Datetime describing the last time the :class:`Bot` ran it's administrative task.
+
     cycle_time: :class:`int`
         Number of **seconds** between periodic bot ticks.
+
     current_tick: :class:`int`
         Number describing the amount of ticks performed.
+
     channels: :class:`AdminChannels`
-    Administrative channels for the :class:`Bot` to use.
+        Administrative channels for the :class:`Bot` to use.
+
     """
 
     def __init__(self):
-        self.version: str = os.getenv('VERSION')
+        self.version: str = os.getenv('VERSION', 'N/A?')
         self.boot_time: datetime = datetime.now()
         self.last_time: datetime = datetime.now()
         try:
-            self.cycle_time: int = os.getenv('CYCLE_TIME')
+            self.cycle_time: int = int(os.getenv('CYCLE_TIME', '600'))
         except KeyError:
             self.cycle_time: int = 600   # 10 minute default time
         self.current_tick: int = 0

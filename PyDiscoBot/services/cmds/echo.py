@@ -2,10 +2,11 @@
     mostly just a testing function
     surprisingly, does support @ing people
     """
+from __future__ import annotations
 
 import discord
 from discord import app_commands
-from ...types import Cmd
+from pydiscobot.types import Cmd
 
 
 class Echo(Cmd):
@@ -19,9 +20,19 @@ class Echo(Cmd):
     async def echo(self,
                    interaction: discord.Interaction,
                    message: str):
-        """echo back to user
+        """Echo a string back to the user.
 
-        Args:
-            ctx (discord.ext.commands.Context): discord context to echo to
+        Intended to debugging purposes (and messing with Flap)
+
+        .. ------------------------------------------------------------
+
+        Arguments
+        -----------
+        interaction: :class:`discord.Interaction`
+            The interaction this command belongs to.
+
+        message: :class:`str`
+            Message to echo back to the user.
+
         """
         await interaction.response.send_message(message)

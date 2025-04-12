@@ -1,6 +1,7 @@
 """clear discord channel of messages
 can only support up to 100, cannot delete older than 14 days (Discord rule)
     """
+from __future__ import annotations
 
 import discord
 from discord import app_commands
@@ -21,12 +22,16 @@ class ClearChannel(Cmd):
                            message_count: int):
         """Clear a discord :class:`TextChannel` of messages.
 
+        .. ------------------------------------------------------------
+
         Arguments
         -----------
         interaction: :class:`discord.Interaction`
             The interaction this command belongs to.
+
         message_count: :class:`int`
             Number of messages to delete. Must be < 100.
+
         """
         await interaction.response.defer()
         await clear_messages(interaction.channel, message_count)

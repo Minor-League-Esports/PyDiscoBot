@@ -82,7 +82,7 @@ if __name__ == '__main__':
 
 Build - :construction: beta
 
-Version - 1.1.1
+Version - 1.1.3
 
 ### Requirements
 - discord.py==2.3.2

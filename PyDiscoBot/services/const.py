@@ -8,6 +8,8 @@ BOT_LOG_NAME = 'bot logger'
 DEF_EMBED_COLOR = '0x206694'
 DEF_EMBED_URL = os.getenv('SERVER_ICON')
 
+DEF_TIME_FORMAT = "%Y/%m/%d, %H:%M:%S"
+
 ERR_BAD_CMD = "That command wasn't found! Type '/' to see all commands."
 ERR_MSG_PARAM = 'You must fill in additional arguments for this command!'
 ERR_RATE_LMT = 'We are being rate limited... Please wait a few moments before trying that again.'
