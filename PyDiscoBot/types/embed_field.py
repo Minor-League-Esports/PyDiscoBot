@@ -1,5 +1,6 @@
 """provide a class that fills an embed's field
     """
+from __future__ import annotations
 
 from dataclasses import dataclass
 
