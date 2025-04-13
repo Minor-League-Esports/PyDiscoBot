@@ -6,8 +6,8 @@ from __future__ import annotations
 import datetime
 from typing import Optional, Union
 import discord
-from pydiscobot.services.const import DEF_TIME_FORMAT
-from pydiscobot.types import EmbedField
+from pydiscobot.services import const
+from pydiscobot.types.embed_field import EmbedField
 
 
 def get_frame(title: Optional[str] = None,
@@ -103,7 +103,7 @@ def get_frame(title: Optional[str] = None,
         color=discord.Color.from_str(str(color)),
         title=title,
         description=descr)
-        .set_footer(text=f'Generated: {datetime.datetime.now().strftime(DEF_TIME_FORMAT)}')
+        .set_footer(text=f'Generated: {datetime.datetime.now().strftime(const.DEF_TIME_FORMAT)}')
         .set_thumbnail(url=thumbnail))
 
     if not fields:

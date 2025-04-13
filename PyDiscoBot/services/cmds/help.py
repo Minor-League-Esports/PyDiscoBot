@@ -5,12 +5,12 @@ from __future__ import annotations
 import discord
 from discord import app_commands
 from pydiscobot.embed_frames import frame
-from pydiscobot.types import Cmd
+from pydiscobot.types import cmd
 
 MSG = '**help**', 'If you have an issue, please reach out to `irox_rl`.'
 
 
-class Help(Cmd):
+class Help(cmd.Cmd):
     """help
     """
 

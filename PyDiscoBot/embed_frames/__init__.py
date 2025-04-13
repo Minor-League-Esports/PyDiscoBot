@@ -1,14 +1,16 @@
 """frames module for discord embeds
     """
 
-from .frame import get_frame
-from .admin import get_admin_frame
-from .notification import get_notification
+from . import admin
+from . import frame
+from . import notification
+from . import test_frames
 
-__version__ = '1.1.2'
+__version__ = '1.1.4'
 
 __all__ = (
-    'get_frame',
-    'get_admin_frame',
-    'get_notification',
+    'admin',
+    'frame',
+    'notification',
+    'test_frames',
 )

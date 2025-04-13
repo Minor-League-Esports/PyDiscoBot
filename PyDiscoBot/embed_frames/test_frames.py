@@ -1,9 +1,11 @@
 """test frames functionality for pydisco bot
     """
+from __future__ import annotations
+
 import unittest
 import discord
-from pydiscobot import embed_frames
-from pydiscobot.types import AdminInfo
+from pydiscobot.embed_frames import frame, admin, notification
+from pydiscobot.types import admin_info
 
 
 class TestFrames(unittest.TestCase):
@@ -13,14 +15,15 @@ class TestFrames(unittest.TestCase):
     def test_get_frame(self):
         """test bot can compile and receive default frame
         """
-        self.assertTrue(isinstance(embed_frames.get_frame(), discord.Embed))
+        frm = frame.get_frame()
+        self.assertTrue(isinstance(frm, discord.Embed))
 
     def test_get_admin_frame(self):
         """test bot can compile and receive admin frame
         """
-        self.assertTrue(isinstance(embed_frames.get_admin_frame(AdminInfo()), discord.Embed))
+        self.assertTrue(isinstance(admin.get_admin_frame(admin_info.AdminInfo()), discord.Embed))
 
     def test_get_notification_frame(self):
         """test bot can compile and receive notification frame
         """
-        self.assertTrue(isinstance(embed_frames.get_notification('bing bong'), discord.Embed))
+        self.assertTrue(isinstance(notification.get_notification('bing bong'), discord.Embed))

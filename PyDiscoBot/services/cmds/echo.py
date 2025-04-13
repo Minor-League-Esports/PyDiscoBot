@@ -6,10 +6,10 @@ from __future__ import annotations
 
 import discord
 from discord import app_commands
-from pydiscobot.types import Cmd
+from pydiscobot.types import cmd
 
 
-class Echo(Cmd):
+class Echo(cmd.Cmd):
     """echo string
     """
 

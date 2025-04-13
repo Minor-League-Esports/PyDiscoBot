@@ -6,10 +6,10 @@ from __future__ import annotations
 import discord
 from discord import app_commands
 from pydiscobot.services.channels import clear_messages
-from pydiscobot.types import Cmd
+from pydiscobot.types import cmd
 
 
-class ClearChannel(Cmd):
+class ClearChannel(cmd.Cmd):
     """ClearChannel command cog.
         """
 

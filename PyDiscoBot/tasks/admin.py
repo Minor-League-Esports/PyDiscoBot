@@ -6,13 +6,13 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Optional
 import discord
-import pydiscobot
-from pydiscobot.types import Task
+from pydiscobot import bot
+from pydiscobot.embed_frames import admin
 from pydiscobot.services import channels
-from pydiscobot import embed_frames
+from pydiscobot.types import task
 
 
-class AdminTask(Task):
+class AdminTask(task.Task):
     """Administrative task for :class:`pydiscobot.Bot`.
 
     Manages updating :class:`AdminInfo`.
@@ -36,7 +36,7 @@ class AdminTask(Task):
     """
 
     def __init__(self,
-                 parent: pydiscobot.Bot):
+                 parent: bot.Bot):
         super().__init__(parent)
         self._msg: Optional[discord.Message] = None
 
@@ -55,14 +55,14 @@ class AdminTask(Task):
 
         if self._msg:
             try:
-                await self._msg.edit(embed=embed_frames.get_admin_frame(self.parent.admin_info))
+                await self._msg.edit(embed=admin.get_admin_frame(self.parent.admin_info))
                 return
             except (discord.errors.NotFound, AttributeError, discord.errors.DiscordServerError):
                 self.logger.info('creating new message...')
 
         await channels.clear_messages(self.parent.admin_info.channels.admin, 100)
         self._msg = await self.parent.admin_info.channels.admin.send(
-            embed=embed_frames.get_admin_frame(self.parent.admin_info)
+            embed=admin.get_admin_frame(self.parent.admin_info)
         )
 
     def _time(self):

@@ -10,13 +10,13 @@ from typing import Union
 import discord
 from discord.ext import commands as disco_commands
 from discord import app_commands
-from .embed_frames import get_notification
-from .services import const, channels
-from .services.cmds import Commands
+from .embed_frames.notification import get_notification
+from .services import cmds, const, channels
 from .services.log import logger
 from .tasks.admin import AdminTask
-from .types import AdminInfo, IllegalChannel, BotNotLoaded, ReportableError
-from .types import InsufficientPrivilege, Tasker
+from .types.admin_info import AdminInfo
+from .types.err import InsufficientPrivilege, IllegalChannel, BotNotLoaded, ReportableError
+from .types.tasker import Tasker
 
 
 class Bot(disco_commands.Bot):
@@ -42,7 +42,7 @@ class Bot(disco_commands.Bot):
     command_cogs: list[:class:`discord.ext.commands.Cog`]
         A list of commands to append to this bot when initializing.
         During the __init__ call, this list will be appended asyncronously to the bot's cogs.
-        After modifying what commands a bot has access to, or the parameters of the commands, 
+        After modifying what commands a bot has access to, or the parameters of the commands,
         a 'sync' command will be required to sync the bot tree.
 
     Examples
@@ -82,7 +82,7 @@ class Bot(disco_commands.Bot):
         self._tasker = Tasker()
         self._tasker.append(AdminTask(self))
 
-        command_cogs.extend(Commands)
+        command_cogs.extend(cmds.Commands)
         for cog in command_cogs:
             asyncio.run(self.add_cog(cog(self)))
 

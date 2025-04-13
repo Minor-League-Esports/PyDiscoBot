@@ -8,7 +8,7 @@ import time
 import discord
 from discord import app_commands
 from pydiscobot.embed_frames import frame
-from pydiscobot.types import Cmd, EmbedField
+from pydiscobot.types import cmd, embed_field
 
 
 ERR = '\n'.join([
@@ -18,7 +18,7 @@ ERR = '\n'.join([
 ])
 
 
-class DateToUnix(Cmd):
+class DateToUnix(cmd.Cmd):
     """convert date to unix string
     date is placed into embed, broken apart, so it can be copied and pasted by the user.
     """
@@ -77,9 +77,9 @@ class DateToUnix(Cmd):
             d = datetime.datetime.strptime(_d, '%y/%m/%d %H:%M:%S')
             unix_time = time.mktime(d.timetuple())
 
-            f = [EmbedField('date ->',
-                            f'template: <`t:{str(int(unix_time))}:F`>\n'
-                            f'<t:{int(unix_time)}:F>')]
+            f = [embed_field.EmbedField('date ->',
+                                        f'template: <`t:{str(int(unix_time))}:F`>\n'
+                                        f'<t:{int(unix_time)}:F>')]
             await interaction.response.send_message(embed=frame.get_frame('**Date To Unix**',
                                                                           '',
                                                                           f))

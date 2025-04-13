@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 from discord.ext import commands
-import pydiscobot
+from pydiscobot import bot
 
 
 class Cmd(commands.Cog):
@@ -33,11 +33,11 @@ class Cmd(commands.Cog):
     """
 
     def __init__(self,
-                 parent: pydiscobot.Bot):
+                 parent: bot.Bot):
         self._parent = parent
 
     @property
-    def parent(self) -> pydiscobot.Bot:
+    def parent(self) -> bot.Bot:
         """get parent of this command
 
         Returns:

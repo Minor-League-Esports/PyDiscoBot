@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import discord
-from pydiscobot.types import EmbedField
+from pydiscobot.types.embed_field import EmbedField
 from .frame import get_frame
 
 

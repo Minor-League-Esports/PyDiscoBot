@@ -7,10 +7,10 @@ from __future__ import annotations
 import discord
 from discord import app_commands
 from discord.ext import commands
-from pydiscobot.types import Cmd
+from pydiscobot.types import cmd
 
 
-class Sync(Cmd):
+class Sync(cmd.Cmd):
     """sync commands
     """
 
