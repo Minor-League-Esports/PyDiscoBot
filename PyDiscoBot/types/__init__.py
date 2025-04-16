@@ -1,27 +1,46 @@
 """PyDiscoBot built-in types
     """
-from . import mock
-from . import admin_channels
-from . import admin_info
-from . import cmd
-from . import embed_field
-from . import err
-from . import pagination
-from . import task
-from . import tasker
-from .. import test_bot
+from . import (
+    bot,
+    cog,
+    embed_field,
+    err,
+    pagination,
+    status,
+    task,
+    tasker,
+)
+
+from .status import Status
+from .bot import BaseBot
+from .cog import BaseCog
+from .embed_field import EmbedField
+from .err import BotNotLoaded, IllegalChannel, InsufficientPrivilege, ReportableError
+from .pagination import Pagination, InteractionPagination
+from .task import BaseTask
+from .tasker import Tasker
 
 __version__ = '1.1.4'
 
 __all__ = (
-    'mock',
-    'admin_channels',
-    'admin_info',
-    'cmd',
+    'bot',
+    'cog',
     'embed_field',
     'err',
     'pagination',
+    'status',
     'task',
     'tasker',
-    'test_bot',
+    'Status',
+    'BaseBot',
+    'BaseCog',
+    'EmbedField',
+    'BotNotLoaded',
+    'IllegalChannel',
+    'InsufficientPrivilege',
+    'ReportableError',
+    'Pagination',
+    'InteractionPagination',
+    'BaseTask',
+    'Tasker',
 )

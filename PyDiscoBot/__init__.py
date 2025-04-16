@@ -1,18 +1,31 @@
 """PyDiscoBot - a bot by irox
     """
-from . import embed_frames
-from . import services
-from . import tasks
-from . import types
-from . import bot
-
+from . import (
+    commands,
+    tasks,
+    types,
+    bot,
+    channels,
+    cog,
+    const,
+    frame,
+    log,
+    task,
+    test_pydiscobot
+)
 
 __version__ = "1.1.4"
 
 __all__ = (
-    'bot',
-    'embed_frames',
-    'services',
+    'commands',
     'tasks',
     'types',
+    'bot',
+    'channels',
+    'cog',
+    'const',
+    'frame',
+    'log',
+    'task',
+    'test_pydiscobot'
 )

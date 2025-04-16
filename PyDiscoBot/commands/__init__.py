@@ -5,7 +5,7 @@ from .datetounix import DateToUnix
 from .echo import Echo
 from .help import Help
 from .sync import Sync
-from . import test_commands
+from .test_commands import TestCommands
 
 
 Commands = [
@@ -21,5 +21,10 @@ __version__ = '1.1.4'
 
 __all__ = (
     'Commands',
-    'test_commands',
+    'ClearChannel',
+    'DateToUnix',
+    'Echo',
+    'Help',
+    'Sync',
+    'TestCommands',
 )

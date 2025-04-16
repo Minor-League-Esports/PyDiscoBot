@@ -4,13 +4,15 @@
     """
 from __future__ import annotations
 
+
 import discord
 from discord import app_commands
 from discord.ext import commands
-from pydiscobot.types import cmd
+
+from .. import cog
 
 
-class Sync(cmd.Cmd):
+class Sync(cog.Cog):
     """sync commands
     """
 

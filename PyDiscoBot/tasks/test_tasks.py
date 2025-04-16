@@ -4,7 +4,12 @@ from __future__ import annotations
 
 import asyncio
 import unittest
-from pydiscobot.types.mock import mock_bot
+
+
+import discord
+
+
+from .. import bot
 
 
 class TestTasks(unittest.TestCase):
@@ -12,10 +17,10 @@ class TestTasks(unittest.TestCase):
     """
 
     def test_admin_task(self):
-        """test admin task by ticking
+        """test status task by ticking
         """
-        bot = mock_bot.MockBot.as_ready()
-        self.assertIsNotNone(bot.tasker.by_name('AdminTask'))
-        self.assertEqual(bot.admin_info.current_tick, 0)
-        asyncio.run(bot.tasker.by_name('AdminTask').run())
-        self.assertEqual(bot.admin_info.current_tick, 1)
+        _bot = bot.Bot('!', discord.Intents(8), [])
+        self.assertIsNotNone(_bot.tasker.by_name('StatusTask'))
+        self.assertEqual(_bot.status.current_tick, 0)
+        asyncio.run(_bot.tasker.by_name('StatusTask').run())
+        self.assertEqual(_bot.status.current_tick, 1)

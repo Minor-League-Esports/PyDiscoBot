@@ -1,8 +1,18 @@
 """create a scrollable / interactable callback display for user interaction
     """
+from __future__ import annotations
+
 
 from typing import Callable, Optional
+
+
 import discord
+
+
+__all__ = (
+    'Pagination',
+    'InteractionPagination',
+)
 
 
 class Pagination(discord.ui.View):

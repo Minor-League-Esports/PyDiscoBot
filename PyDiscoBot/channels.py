@@ -2,8 +2,15 @@
     """
 from __future__ import annotations
 
+
 from typing import Union
 import discord
+
+
+__all__ = (
+    'find_ch',
+    'clear_messages',
+)
 
 
 def find_ch(guilds: list[discord.Guild],

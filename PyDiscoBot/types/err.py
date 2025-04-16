@@ -1,26 +1,34 @@
 """provide error types for defining raise conditions
     """
+from __future__ import annotations
+
 
 from discord.ext import commands
+
+
+__all__ = (
+    'BotNotLoaded',
+    'InsufficientPrivilege',
+    'IllegalChannel',
+    'ReportableError'
+)
 
 
 class BotNotLoaded(commands.CheckFailure):
     """bot has not finished loading yet.
     """
-    pass
 
 
 class InsufficientPrivilege(commands.CheckFailure):
     """user does not have correct privileges.
     """
-    pass
 
 
 class IllegalChannel(commands.CheckFailure):
     """you cannot do that action in this channel.
     """
-    pass
 
 
 class ReportableError(Exception):
-    pass
+    """reportable error to append text for notifications to
+    """

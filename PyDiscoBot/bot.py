@@ -2,24 +2,35 @@
     """
 from __future__ import annotations
 
+
 import asyncio
 import datetime
+from io import StringIO
 import os
-from logging import Logger
-from typing import Union
+import sys
+from typing import Optional, Union
+import unittest
+
+
 import discord
-from discord.ext import commands as disco_commands
 from discord import app_commands
-from .embed_frames.notification import get_notification
-from .services import cmds, const, channels
-from .services.log import logger
-from .tasks.admin import AdminTask
-from .types.admin_info import AdminInfo
-from .types.err import InsufficientPrivilege, IllegalChannel, BotNotLoaded, ReportableError
-from .types.tasker import Tasker
+from discord.ext import commands
+
+from .const import ERR_BAD_PRV, ERR_RATE_LMT
+from .channels import find_ch
+from .commands import Commands
+from .frame import get_notification_frame
+from .log import logger
+from .tasks import StatusTask
+from .types import (
+    Status,
+    BaseBot,
+    Tasker,
+    ReportableError
+)
 
 
-class Bot(disco_commands.Bot):
+class Bot(BaseBot, commands.Bot):
     """Represents a Discord bot, wrapped with built-in logic
 
     This class is a subclass of :class:`discord.ext.commands.Bot` and as a result
@@ -71,127 +82,107 @@ class Bot(disco_commands.Bot):
     def __init__(self,
                  command_prefix: Union[str, list],
                  bot_intents: discord.Intents,
-                 command_cogs: list[disco_commands.Cog]):
+                 command_cogs: list[commands.Cog]):
+
         super().__init__(command_prefix=command_prefix,
                          intents=bot_intents)
 
         self._logger = logger(self.__class__.__name__)
-        self.logger.info('initializing...')
-
-        self._admin_info = AdminInfo()
+        self._status = Status()
         self._tasker = Tasker()
-        self._tasker.append(AdminTask(self))
+        self._tasker.append(StatusTask(self))
 
-        command_cogs.extend(cmds.Commands)
+        command_cogs.extend(Commands)
         for cog in command_cogs:
             asyncio.run(self.add_cog(cog(self)))
 
         self.tree.on_error = self.on_tree_error
 
-    @property
-    def admin_info(self) -> AdminInfo:
-        """ return admin info for the bot
-        """
-        return self._admin_info
-
-    @property
-    def logger(self) -> Logger:
-        """get logger of the bot
-
-        Returns:
-            Logger: logger
-        """
-        return self._logger
-
-    @property
-    def tasker(self) -> Tasker:
-        """get this bot's task list
-
-        Returns:
-            Tasker: task list (Tasker)
-        """
-        return self._tasker
-
     async def notify(self,
-                     message: str | Exception) -> None:
-        """ Helper function to send error or notification messages to notify channel with a single parameter.\n
-        **If a notification channel does not exist**, the notification is printed to console instead\n
-        **param message**: message to report\n
-        **returns**: None\n
+                     message: Union[str, Exception]) -> None:
+        """Send a message to the `Bot`'s notification channel (if exists).
+
+        If there is no notification channel, the `message` is instead printed to console.
+
+        .. ------------------------------------------------------------
+
+        Arguments
+        -----------
+        message Union[:class:`str`, :class:`Exception`]
+            The message to be sent. Will be wrapped in a generic :class:`discord.Embed`.
+
         """
         if not message:
             return
-        if not self._admin_info.channels.notification:
-            return print(message)
-        await self.send_notification(ctx=self._admin_info.channels.notification,
-                                     text=message,
+
+        if not self.status.channels.notification:
+            print(message)
+            return
+
+        await self.send_notification(dest=self.status.channels.notification,
+                                     msg=message,
                                      as_reply=False)
 
-    async def send_notification(self,
-                                ctx: discord.abc.Messageable,
-                                text: str,
-                                as_reply: bool = False,
-                                as_followup: bool = False) -> None:
-        """ Helper function to send notifications
+    async def on_ready(self,
+                       suppress_task=False) -> None:
+        """method called by discord api when the bot connects to the gateway server and is ready for production
+
+        .. ------------------------------------------------------------
+
+        Arguments
+        -----------
+        suppress_task :type:`bool`
+            Whether to suppress the periodic task or not. Defaults to `False`.
         """
-        if isinstance(ctx, discord.ext.commands.Context):
-            if as_reply and ctx.author is not None:
-                await ctx.reply(embed=get_notification(text))
-            else:
-                await ctx.send(embed=get_notification(text))
+        self._logger.info('PyDiscoBot on_ready...')
+        if self._status.initialized:
+            self._logger.warning('already initialized!')
+            return
 
-        elif isinstance(ctx, discord.Interaction):
-            if as_followup:
-                await ctx.followup.send(embed=get_notification(text))
-            else:
-                try:
-                    return await ctx.response.send_message(embed=get_notification(text))
-                except discord.errors.InteractionResponded:
-                    return await ctx.followup.send(embed=get_notification(text))
+        admin_channel_token = os.getenv('ADMIN_CHANNEL')
+        notification_channel_token = os.getenv('NOTIFICATION_CHANNEL')
 
-        elif isinstance(ctx, discord.TextChannel):
-            await ctx.send(embed=get_notification(text))
+        if admin_channel_token:
+            self._logger.info('initializing admin channel...')
+            self._status.channels.admin = find_ch(self.guilds,
+                                                  admin_channel_token)
+            if not self._status.channels.admin:
+                self._logger.warning('admin channel not found...')
 
-    async def on_command_error(self,
-                               ctx: discord.ext.commands.Context,
-                               error) -> None:
-        """ Override of discord.Bot on_command_error
-            If CommandNotFound, simply reply to the user of the error.\n
-            If not, raise the error naturally\n
-            """
-        if isinstance(error, discord.ext.commands.errors.CommandNotFound):
-            await ctx.reply(const.ERR_BAD_CMD)
-        elif isinstance(error, discord.ext.commands.errors.MissingRequiredArgument):
-            await ctx.reply(const.ERR_MSG_PARAM)
-        elif isinstance(error, discord.HTTPException):
-            await ctx.reply(const.ERR_RATE_LMT)
-        elif isinstance(error, InsufficientPrivilege):
-            await ctx.reply(const.ERR_BAD_PRV)
-        elif isinstance(error, IllegalChannel):
-            await ctx.reply(const.ERR_BAD_CH)
-        elif isinstance(error, BotNotLoaded):
-            await ctx.reply(const.ERR_BOT_NL)
-        elif isinstance(error, ReportableError):
-            await ctx.reply(str(error))
-        else:
-            await self.notify(f'Error encountered:\n{str(error)}')
-            raise error
+        if notification_channel_token:
+            self._logger.info('initializing notification channel...')
+            self._status.channels.notification = find_ch(self.guilds,
+                                                         notification_channel_token)
+            if not self._status.channels.notification:
+                self._logger.warning('notification channel not found...')
+
+        self._status.initialized = True
+        self._logger.info("POST -> %s", datetime.datetime.now().strftime('%c'))
+
+        if not suppress_task:
+            self._tasker.run.change_interval(seconds=self.status.cycle_time)
+            self._tasker.run.start()
 
     async def on_tree_error(self,
                             interaction: discord.Interaction,
                             error: app_commands.AppCommandError):
         """override of parent error method
 
-        Args:
-            interaction (discord.Interaction): interaction that caused the error
-            error (app_commands.AppCommandError): error raised
+        .. ------------------------------------------------------------
+
+        Arguments
+        -----------
+        interaction :class:`discord.Interaction`
+            `interaction` that caused the error.
+        error :class:`app_commands.AppCommandError`
+            Error raised.
         """
         if isinstance(error, app_commands.CommandOnCooldown):
-            await interaction.response.send_message(const.ERR_RATE_LMT)
+            await interaction.response.send_message(ERR_RATE_LMT)
             return
 
         elif isinstance(error, app_commands.MissingPermissions):
-            await interaction.response.send_message(const.ERR_BAD_PRV)
+            await interaction.response.send_message(ERR_BAD_PRV)
             return
 
         elif isinstance(error, discord.app_commands.CommandInvokeError):
@@ -204,38 +195,83 @@ class Bot(disco_commands.Bot):
         await self.notify(error)
         raise error
 
-    async def on_ready(self,
-                       suppress_task=False) -> None:
-        """method called by discord api when the bot connects to the gateway server and is ready for production
+    async def send_notification(self,
+                                dest: Union[commands.Context, discord.Interaction, discord.TextChannel],
+                                msg: str,
+                                as_reply: Optional[bool] = False,
+                                as_followup: Optional[bool] = False) -> None:
+        """Send a notification `embed` to a specified `Channel`, `Context` or `Interaction`.
 
-        Args:
-            suppress_task (bool, optional): run periodic task or not. Defaults to False.
+        .. ------------------------------------------------------------
+
+        Arguments
+        -----------
+        dest Union[:class:`commands.Context`, :class:`discord.Interaction`, :class:`discord.TextChannel`]
+            The destination to send a notification `Embed` to.
+
+        msg :type:`str`
+            The message to be sent in the body of the notification `Embed`.
+
+        as_reply Optional[:class:`bool`]
+            Defaults to ``False``. Set if you want the bot to reply with the message.
+
+            This works with both `Context` and `Interaction`.
+
+        as_followup Optional[:class:`bool`]
+            Defaults to ``False``. Set if you want the bot to followup to a defer.
+
+            This ``only`` works with an `Interaction` that has been deferred.
+
+            Otherwise, this WILL raise an `Exception`
+
         """
-        self._logger.info('PyDiscoBot on_ready...')
-        if self._admin_info.initialized:
-            self._logger.warning('already initialized!')
-            return
+        if isinstance(dest, commands.Context):
+            embed = get_notification_frame(msg)
+            if as_reply and dest.author is not None:
+                await dest.reply(embed=embed)
+            else:
+                await dest.send(embed=embed)
 
-        admin_channel_token = os.getenv('ADMIN_CHANNEL')
-        notification_channel_token = os.getenv('NOTIFICATION_CHANNEL')
+        elif isinstance(dest, discord.Interaction):
+            if as_followup:
+                await dest.followup.send(embed=embed)
+            else:
+                try:
+                    await dest.response.send_message(embed=embed)
+                except discord.errors.InteractionResponded:
+                    await dest.followup.send(embed=embed)
 
-        if admin_channel_token:
-            self._logger.info('initializing admin channel...')
-            self._admin_info.channels.admin = channels.find_ch(self.guilds,
-                                                               admin_channel_token)
-            if not self._admin_info.channels.admin:
-                self._logger.warning('admin channel not found...')
+        elif isinstance(dest, discord.TextChannel):
+            await dest.send(embed=embed)
 
-        if notification_channel_token:
-            self._logger.info('initializing notification channel...')
-            self._admin_info.channels.notification = channels.find_ch(self.guilds,
-                                                                      notification_channel_token)
-            if not self._admin_info.channels.notification:
-                self._logger.warning('notification channel not found...')
+        else:
+            raise TypeError(
+                'Invalid type was passed.\n'
+                'Destination must be of type `Context`, `Interaction` or `TextChannel`.')
 
-        self._admin_info.initialized = True
-        self._logger.info("POST -> %s", datetime.datetime.now().strftime('%c'))
 
-        if not suppress_task:
-            self._tasker.run.change_interval(seconds=self.admin_info.cycle_time)
-            self._tasker.run.start()
+class TestBaseBot(unittest.TestCase):
+    """test case for `BaseBot`
+    """
+
+    def test_notify(self):
+        """test bot notify
+        """
+        bot = Bot('!', discord.Intents(8), [])
+
+        def notify_callback(**kwargs):
+            ...
+
+        capt = StringIO()
+        sys.stdout = capt
+
+        asyncio.run(bot.notify(None))
+        self.assertEqual(capt.getvalue(), '')
+
+        value = 'This is a notification!'
+        asyncio.run(bot.notify(value))
+        self.assertEqual(capt.getvalue(), value)
+
+        bot.status.channels.notification = notify_callback
+
+        sys.stdout = sys.__stdout__
