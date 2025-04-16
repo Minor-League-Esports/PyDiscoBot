@@ -1,4 +1,5 @@
-cd "$(dirname "$0")"
+# change this to your .venv directory
+source C:/Users/brian/Documents/vscode/workspaces/MinorLeagueEsports/.venv/Scripts/activate
 
 pytest
 
