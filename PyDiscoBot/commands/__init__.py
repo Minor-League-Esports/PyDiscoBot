@@ -5,13 +5,8 @@ from .datetounix import DateToUnix
 from .echo import Echo
 from .help import Help
 from .sync import Sync
+from .test_commands import TestCommands
 
-
-__version__ = '1.1.2'
-
-__all__ = (
-    'Commands',
-)
 
 Commands = [
     ClearChannel,
@@ -20,3 +15,16 @@ Commands = [
     Help,
     Sync,
 ]
+
+
+__version__ = '1.1.4'
+
+__all__ = (
+    'Commands',
+    'ClearChannel',
+    'DateToUnix',
+    'Echo',
+    'Help',
+    'Sync',
+    'TestCommands',
+)

@@ -3,6 +3,9 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# vscode environment
+.vscode/
+
 # bat extension
 *.bat
 

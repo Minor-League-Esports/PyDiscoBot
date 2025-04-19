@@ -3,13 +3,18 @@ can only support up to 100, cannot delete older than 14 days (Discord rule)
     """
 from __future__ import annotations
 
+
 import discord
 from discord import app_commands
-from pydiscobot.services.channels import clear_messages
-from pydiscobot.types import Cmd
 
 
-class ClearChannel(Cmd):
+from .. import (
+    channels,
+    cog
+)
+
+
+class ClearChannel(cog.Cog):
     """ClearChannel command cog.
         """
 
@@ -34,4 +39,4 @@ class ClearChannel(Cmd):
 
         """
         await interaction.response.defer()
-        await clear_messages(interaction.channel, message_count)
+        await channels.clear_messages(interaction.channel, message_count)

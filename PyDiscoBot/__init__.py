@@ -1,23 +1,37 @@
 """PyDiscoBot - a bot by irox
     """
-from .bot import Bot
-from .types import BotNotLoaded, EmbedField, IllegalChannel, InsufficientPrivilege
-from .types import ReportableError, Pagination, InteractionPagination
-from .services import const, cmds
-from . import embed_frames
+from . import (
+    commands,
+    tasks,
+    types,
+    channels,
+    const,
+    frame,
+    log,
+    test_pydiscobot
+)
 
-__version__ = "1.1.3"
+
+from .bot import Bot
+from .cog import Cog
+from .task import Task
+from .types import EmbedField, InteractionPagination
+
+__version__ = "1.1.4"
 
 __all__ = (
-    "Bot",
-    'ReportableError',
-    'IllegalChannel',
-    'InsufficientPrivilege',
-    'BotNotLoaded',
-    "Pagination",
-    "InteractionPagination",
+    'commands',
+    'tasks',
+    'types',
+    'channels',
     'const',
-    'cmds',
-    'embed_frames',
+    'frame',
+    'log',
+    'task',
+    'test_pydiscobot',
+    'Bot',
+    'Cog',
     'EmbedField',
+    'InteractionPagination',
+    'Task',
 )

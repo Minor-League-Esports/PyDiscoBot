@@ -3,27 +3,22 @@
     """
 from __future__ import annotations
 
-from datetime import datetime
-from typing import Optional
+
+from typing import Optional, TYPE_CHECKING
 import discord
-import pydiscobot
-from pydiscobot.types import Task
-from pydiscobot.services import channels
-from pydiscobot import embed_frames
+
+from .. import channels, frame
+from .. import task
+
+if TYPE_CHECKING:
+    from ..types import BaseBot
 
 
-class AdminTask(Task):
-    """Administrative task for :class:`pydiscobot.Bot`.
+class StatusTask(task.Task):
+    """Status task for :class:`pydiscobot.Bot`.
 
-    Manages updating :class:`AdminInfo`.
+    Manages updating :class:`Status`.
     Also manages posting infos to admin :class:`discord.TextChannel` (if it exists).
-
-    .. ------------------------------------------------------------
-
-    Arguments
-    -----------
-    parent: :class:`pydiscobot.Bot`
-        The bot this task belongs to.
 
     .. ------------------------------------------------------------
 
@@ -36,7 +31,7 @@ class AdminTask(Task):
     """
 
     def __init__(self,
-                 parent: pydiscobot.Bot):
+                 parent: BaseBot):
         super().__init__(parent)
         self._msg: Optional[discord.Message] = None
 
@@ -49,35 +44,24 @@ class AdminTask(Task):
         """
 
     async def _msg_ch(self):
-        if not self.parent.admin_info.channels.admin:
+        if not self.parent.status.channels.admin:
             self.logger.warning('no admin channel available...')
             return
 
         if self._msg:
             try:
-                await self._msg.edit(embed=embed_frames.get_admin_frame(self.parent.admin_info))
+                await self._msg.edit(embed=frame.get_status_frame(self.parent.status))
                 return
             except (discord.errors.NotFound, AttributeError, discord.errors.DiscordServerError):
                 self.logger.info('creating new message...')
 
-        await channels.clear_messages(self.parent.admin_info.channels.admin, 100)
-        self._msg = await self.parent.admin_info.channels.admin.send(
-            embed=embed_frames.get_admin_frame(self.parent.admin_info)
+        await channels.clear_messages(self.parent.status.channels.admin, 100)
+        self._msg = await self.parent.status.channels.admin.send(
+            embed=frame.get_status_frame(self.parent.status)
         )
-
-    def _time(self):
-        """ time function
-        """
-        self.parent.admin_info.last_time = datetime.now()
-
-    async def _admin(self):
-        """ periodic task admin
-        """
-        self.parent.admin_info.current_tick += 1
-        self._time()
 
     async def run(self):
         """run the admin task
         """
         await self._msg_ch()
-        await self._admin()
+        self.parent.status.tick()

@@ -4,12 +4,14 @@
     """
 from __future__ import annotations
 
+
 import discord
 from discord import app_commands
-from pydiscobot.types import Cmd
+
+from .. import cog
 
 
-class Echo(Cmd):
+class Echo(cog.Cog):
     """echo string
     """
 

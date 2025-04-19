@@ -2,17 +2,21 @@
     """
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
-from logging import Logger
-from typing import Any
-import pydiscobot
-from pydiscobot.services import log
+
+from typing import TYPE_CHECKING
 
 
-class Task(ABC):
-    """:class:`ABC` abstract class for :class:`Bot` tasks.
+if TYPE_CHECKING:
+    from .bot import BaseBot
 
-    All tasks should be derived from this abstract :class:`Task`.
+
+__all__ = (
+    'BaseTask',
+)
+
+
+class BaseTask:
+    """Base class for :class:`Task`.
 
     .. ------------------------------------------------------------
 
@@ -33,63 +37,36 @@ class Task(ABC):
 
     .. ------------------------------------------------------------
 
-    Examples
-    ----------
-
-    Create a child :type:`class` that inherits this class :class:`Task`
-
-    .. code-block:: python
-
-        import discord
-        from pydiscobot.types import Task
-
-        class MyTask(Task):
-            'this is my task class!'
-
-            def __init__(self,
-                         parent: pydiscobot.Bot):
-                super().__init__(parent)
-                ...
-
-            def run(self):
-                'this override gets triggered by the bot every tick!'
-                ...
-
     """
 
     def __init__(self,
-                 parent: pydiscobot.Bot):
-        self._parent = parent
-        self._logger = log.logger(self.__class__.__name__)
+                 parent: BaseBot):
+        self._parent: BaseBot = parent
 
     @property
     def name(self) -> str:
-        """get the name of this task
+        """Get the `name` of this :class:`Task`.
 
-        Returns:
-            str: name
-        """
+    .. ------------------------------------------------------------
+
+    Returns
+    -----------
+    name: :class:`str`
+        The name of this :class:`Task`.
+
+    """
         return self.__class__.__name__
 
     @property
-    def logger(self) -> Logger:
-        """get this task's logger
+    def parent(self) -> BaseBot:
+        """Get the :class:`pydiscobot.Bot` of this :class:`Task`.
 
-        Returns:
-            Logger: logger
-        """
-        return self._logger
+    .. ------------------------------------------------------------
 
-    @property
-    def parent(self) -> Any:
-        """get this task's parent
+    Returns
+    -----------
+    parent: :class:`pydiscobot.Bot`
+        The parent :class:`pydiscobot.Bot` that owns this :class:`Task`.
 
-        Returns:
-            Any: parent
-        """
+    """
         return self._parent
-
-    @abstractmethod
-    async def run(self):
-        """run the task
-        """
