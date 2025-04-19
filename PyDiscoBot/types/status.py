@@ -139,6 +139,10 @@ class Status:
         """
         return self._initialized
 
+    @initialized.setter
+    def initialized(self, value) -> None:
+        self._initialized = value
+
     @property
     def cycle_time(self) -> int:
         """ Number of **seconds** between periodic bot ticks.

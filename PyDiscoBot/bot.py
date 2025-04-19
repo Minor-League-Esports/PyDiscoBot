@@ -225,8 +225,9 @@ class Bot(BaseBot, commands.Bot):
             Otherwise, this WILL raise an `Exception`
 
         """
+        embed = get_notification_frame(msg)
+
         if isinstance(dest, commands.Context):
-            embed = get_notification_frame(msg)
             if as_reply and dest.author is not None:
                 await dest.reply(embed=embed)
             else:
